@@ -36,8 +36,8 @@ body {
 
 .hero-panel {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2rem;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
   align-items: stretch;
 }
 
@@ -50,6 +50,9 @@ body {
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .hero-content::after {
@@ -60,52 +63,53 @@ body {
   pointer-events: none;
 }
 
-.tag {
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  color: var(--muted);
-  margin-bottom: 0.8rem;
-}
-
-.hero-content h1 {
+.hero-copy h1 {
   font-family: 'Oxanium', 'Manrope', sans-serif;
   font-size: clamp(2.5rem, 4vw, 3.5rem);
   margin: 0 0 1rem;
 }
 
-.hero-content .lede {
+.hero-copy .lede {
   color: var(--muted);
   line-height: 1.8;
-  margin-bottom: 1.5rem;
+  margin: 0;
 }
 
-.stats {
+.tag {
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.info-strip {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
 }
 
-.stats div {
+.info-pill {
   flex: 1;
-  min-width: 140px;
-  padding: 1rem;
+  min-width: 120px;
+  padding: 0.9rem 1rem;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(14px);
 }
 
-.stats .label {
+.info-pill span {
+  display: block;
   font-size: 0.75rem;
-  text-transform: uppercase;
   letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
-.stats strong {
+.info-pill strong {
   display: block;
-  font-size: 1.25rem;
-  margin-top: 0.4rem;
+  font-size: 1.3rem;
+  margin-top: 0.25rem;
 }
 
 .filter-card {
@@ -116,6 +120,20 @@ body {
   box-shadow: 0 30px 80px rgba(5, 5, 10, 0.7);
   position: relative;
   overflow: hidden;
+  width: 100%;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 480px) minmax(360px, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.control-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .filter-card::before {
@@ -150,6 +168,16 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.datetime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.datetime-grid .pill-field {
+  margin-bottom: 0;
 }
 
 .pill-field {
@@ -208,13 +236,30 @@ body {
 
 .status-button {
   flex: 1;
-  padding: 0.65rem 0;
+  padding: 0.55rem 0.6rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 600;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.status-button .checkmark {
+  font-size: 0.85rem;
+  opacity: 0.15;
+  transform: scale(0.9);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.status-button .label {
+  letter-spacing: 0.08em;
 }
 
 .status-button[data-status='OK'] {
@@ -226,9 +271,25 @@ body {
 }
 
 .status-button.active {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--accent);
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+}
+
+.status-button.active .checkmark {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.status-button.active[data-status='OK'] {
+  background: linear-gradient(120deg, rgba(0, 208, 142, 0.3), rgba(0, 208, 142, 0.05));
+  border-color: rgba(0, 208, 142, 0.9);
+  color: #00d08e;
+}
+
+.status-button.active[data-status='NG'] {
+  background: linear-gradient(120deg, rgba(246, 70, 104, 0.3), rgba(246, 70, 104, 0.05));
+  border-color: rgba(246, 70, 104, 0.9);
+  color: #f64668;
 }
 
 .flush-button {
@@ -294,7 +355,8 @@ body {
 
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+  justify-content: start;
   gap: 1.2rem;
   margin-top: 1.5rem;
 }

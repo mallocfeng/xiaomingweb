@@ -82,19 +82,29 @@ export function buildSearchQuery({
     parameters.orderName = `%${orderName}%`;
   }
 
-  stationFilters.forEach((filter, index) => {
-    if (!filter?.key || !filter?.status) return;
+  const stationClauses = [];
+  stationFilters.forEach((filter, stationIndex) => {
+    if (!filter?.key || !filter?.statuses?.length) return;
     const key = filter.key.toUpperCase();
     if (!STATION_KEYS.includes(key)) return;
 
-    const status = STATUS_MAP[filter.status.toUpperCase()];
-    if (status === undefined) return;
+    const statusParams = [];
+    filter.statuses.forEach((statusKey, statusIndex) => {
+      const normalizedStatus = STATUS_MAP[statusKey.toUpperCase()];
+      if (normalizedStatus === undefined) return;
+      const paramName = `station_${stationIndex}_${statusIndex}`;
+      parameters[paramName] = normalizedStatus;
+      statusParams.push(`@${paramName}`);
+    });
 
+    if (!statusParams.length) return;
     const column = `${key}Result`;
-    const paramName = `station_${index}`;
-    clauses.push(`${column} = @${paramName}`);
-    parameters[paramName] = status;
+    stationClauses.push(`(${column} IN (${statusParams.join(', ')}) OR ${column} IS NULL)`);
   });
+
+  if (stationClauses.length) {
+    clauses.push(`(${stationClauses.join(' AND ')})`);
+  }
 
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   const finalLimit = Math.min(Math.max(limit, 1), 500);

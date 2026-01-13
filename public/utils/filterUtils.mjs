@@ -20,8 +20,13 @@ export const rangePresets = [
 
 export function mapStationFilters(stationState = []) {
   return stationState
-    .filter((station) => station.status)
-    .map(({ key, status }) => ({ key, status }));
+    .map((station) => {
+      const statuses = [];
+      if (station.ok) statuses.push('OK');
+      if (station.ng) statuses.push('NG');
+      return statuses.length ? { key: station.key, statuses } : null;
+    })
+    .filter(Boolean);
 }
 
 export function deriveRangeBounds(rangeKey, now = new Date()) {

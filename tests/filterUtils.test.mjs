@@ -3,16 +3,16 @@ import assert from 'node:assert/strict';
 import { mapStationFilters, deriveRangeBounds, rangePresets } from '../public/utils/filterUtils.mjs';
 
 describe('filter utils', () => {
-  it('only serializes active station filters', () => {
+  it('groups selected statuses per station', () => {
     const state = [
-      { key: 'OP10', status: 'OK' },
-      { key: 'OP20', status: null },
-      { key: 'OP30', status: 'NG' }
+      { key: 'OP10', ok: true, ng: false },
+      { key: 'OP20', ok: false, ng: false },
+      { key: 'OP30', ok: true, ng: true }
     ];
     const payload = mapStationFilters(state);
     assert.strictEqual(payload.length, 2);
-    assert.deepStrictEqual(payload[0], { key: 'OP10', status: 'OK' });
-    assert.deepStrictEqual(payload[1], { key: 'OP30', status: 'NG' });
+    assert.deepStrictEqual(payload[0], { key: 'OP10', statuses: ['OK'] });
+    assert.deepStrictEqual(payload[1], { key: 'OP30', statuses: ['OK', 'NG'] });
   });
 
   it('derives expected range bounds', () => {

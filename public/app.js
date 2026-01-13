@@ -1,13 +1,8 @@
-import {
-  stationKeys,
-  rangePresets,
-  mapStationFilters,
-  deriveRangeBounds
-} from './utils/filterUtils.mjs';
+import { stationKeys, mapStationFilters, deriveRangeBounds } from './utils/filterUtils.mjs';
 
 const stationGrid = document.querySelector('#station-grid');
-const rangeSelect = document.querySelector('#range-select');
-const rangeDisplay = document.querySelector('#range-display');
+const startInput = document.querySelector('#start-time');
+const endInput = document.querySelector('#end-time');
 const filterForm = document.querySelector('#filter-form');
 const snInput = document.querySelector('#sn-input');
 const orderInput = document.querySelector('#order-input');
@@ -17,22 +12,7 @@ const resultsGrid = document.querySelector('#results-grid');
 const resultCount = document.querySelector('#result-count');
 const fetchButton = document.querySelector('#fetch-button');
 
-const stationState = stationKeys.map((station) => ({ key: station.key, status: null }));
-
-function injectRangeOptions() {
-  rangeSelect.innerHTML = rangePresets
-    .map(
-      (entry, index) =>
-        `<option value="${entry.key}" ${entry.key === 'LAST_24_HOURS' ? 'selected' : ''} data-index="${index}">${entry.label}</option>`
-    )
-    .join('');
-  updateRangeDisplay();
-}
-
-function updateRangeDisplay() {
-  const preview = deriveRangeBounds(rangeSelect.value);
-  rangeDisplay.textContent = ` ${preview.label}`;
-}
+const stationState = stationKeys.map((station) => ({ key: station.key, ok: true, ng: true }));
 
 function buildStationCards() {
   stationGrid.innerHTML = stationKeys
@@ -42,18 +22,33 @@ function buildStationCards() {
         <strong>${station.key}</strong>
         <p>${station.label}</p>
         <div class="station-buttons">
-          <button type="button" class="status-button" data-status="OK">OK</button>
-          <button type="button" class="status-button" data-status="NG">NG</button>
+          <button type="button" class="status-button" data-status="OK">
+            <span class="checkmark">✅</span>
+            <span class="label">OK</span>
+          </button>
+          <button type="button" class="status-button" data-status="NG">
+            <span class="checkmark">✅</span>
+            <span class="label">NG</span>
+          </button>
         </div>
       </div>`
     )
     .join('');
+
+  stationKeys.forEach((station) => {
+    const card = stationGrid.querySelector(`[data-key="${station.key}"]`);
+    const entry = stationState.find((item) => item.key === station.key);
+    if (card && entry) {
+      refreshStationButtons(card, entry);
+    }
+  });
 }
 
-function refreshStationButtons(cardEl, status) {
+function refreshStationButtons(cardEl, entry) {
   const buttons = cardEl.querySelectorAll('.status-button');
   buttons.forEach((button) => {
-    button.classList.toggle('active', button.dataset.status === status);
+    const statusKey = button.dataset.status.toLowerCase();
+    button.classList.toggle('active', Boolean(entry?.[statusKey]));
   });
 }
 
@@ -63,13 +58,12 @@ stationGrid.addEventListener('click', (event) => {
   const card = event.target.closest('.station-card');
   const key = card.dataset.key;
   const entry = stationState.find((item) => item.key === key);
-  const clickedStatus = button.dataset.status;
-  entry.status = entry.status === clickedStatus ? null : clickedStatus;
-  refreshStationButtons(card, entry.status);
-});
-
-rangeSelect.addEventListener('change', () => {
-  updateRangeDisplay();
+  const clickedStatus = button.dataset.status.toLowerCase();
+  entry[clickedStatus] = !entry[clickedStatus];
+  if (!entry.ok && !entry.ng) {
+    entry[clickedStatus] = true;
+  }
+  refreshStationButtons(card, entry);
 });
 
 filterForm.addEventListener('submit', async (event) => {
@@ -80,9 +74,8 @@ filterForm.addEventListener('submit', async (event) => {
 async function executeSearch() {
   fetchButton.disabled = true;
   statusMessage.textContent = '正在联系 SQL Server...';
-  const rangeBounds = deriveRangeBounds(rangeSelect.value);
+  const rangeBounds = getRangeBoundsFromInputs();
   const payload = {
-    rangeKey: rangeSelect.value,
     startTime: rangeBounds.startTime ? rangeBounds.startTime.toISOString() : undefined,
     stopTime: rangeBounds.stopTime ? rangeBounds.stopTime.toISOString() : undefined,
     stationFilters: mapStationFilters(stationState),
@@ -155,8 +148,35 @@ function renderResults(records = []) {
     .join('');
 }
 
+function formatLocalDatetime(datetime) {
+  const tzOffset = datetime.getTimezoneOffset();
+  const local = new Date(datetime.getTime() - tzOffset * 60000);
+  return local.toISOString().slice(0, 19);
+}
+
+function getRangeBoundsFromInputs() {
+  let startTime = startInput.value ? new Date(startInput.value) : undefined;
+  let stopTime = endInput.value ? new Date(endInput.value) : undefined;
+  if (!startTime || !stopTime) {
+    const fallback = deriveRangeBounds('LAST_24_HOURS');
+    startTime ??= fallback.startTime;
+    stopTime ??= fallback.stopTime;
+  }
+  return { startTime, stopTime };
+}
+
+function setDefaultRangeInputs() {
+  const bounds = deriveRangeBounds('LAST_24_HOURS');
+  if (bounds.startTime) {
+    startInput.value = formatLocalDatetime(bounds.startTime);
+  }
+  if (bounds.stopTime) {
+    endInput.value = formatLocalDatetime(bounds.stopTime);
+  }
+}
+
 function init() {
-  injectRangeOptions();
+  setDefaultRangeInputs();
   buildStationCards();
   renderResults([]);
 }
