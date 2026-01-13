@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TS70 工站探索器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="aurora-shell">
+      <section class="hero-panel">
+        <div class="hero-content">
+          <p class="tag">TS70 · 数据中枢</p>
+          <h1>小明的工站结果浏览</h1>
+          <p class="lede">
+            用时尚的动效把控每一站 OK/NG，筛选 SN、订单和时间，实时呈现 TS70 流程的血脉。
+          </p>
+          <div class="stats">
+            <div>
+              <span class="label">服务器</span>
+              <strong>127.0.0.1</strong>
+            </div>
+            <div>
+              <span class="label">数据库</span>
+              <strong>TS70_246K</strong>
+            </div>
+            <div>
+              <span class="label">最多记录</span>
+              <strong>100</strong>
+            </div>
+          </div>
+        </div>
+        <div class="filter-card">
+          <div class="filter-header">
+            <h2>查询面板</h2>
+            <span class="chip" id="range-display">默认：最近 24 小时</span>
+          </div>
+          <form id="filter-form">
+            <label class="pill-field">
+              <span>时间范围</span>
+              <select id="range-select">
+                <!-- populated by script -->
+              </select>
+            </label>
+            <label class="pill-field">
+              <span>SN/序列号</span>
+              <input type="text" id="sn-input" placeholder="例如：SN2026-0001" />
+            </label>
+            <label class="pill-field">
+              <span>订单号 / 工单</span>
+              <input type="text" id="order-input" placeholder="例如：ND-246" />
+            </label>
+            <label class="pill-field">
+              <span>最多记录</span>
+              <select id="limit-select">
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="75">75</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+            <div class="station-legend">
+              <p>选择需要过滤的工站状态（最多 5 种范围 + OK/NG）</p>
+            </div>
+            <div id="station-grid" class="station-grid"></div>
+            <button type="submit" id="fetch-button" class="flush-button">立刻查询</button>
+            <p class="helper" id="status-message">准备好后点击查询。</p>
+          </form>
+        </div>
+      </section>
+      <section class="results-panel">
+        <header class="results-header">
+          <div>
+            <p class="label">查询结果</p>
+            <h3 id="result-count">0 条记录</h3>
+          </div>
+          <span class="pulse"></span>
+        </header>
+        <div id="results-grid" class="results-grid"></div>
+      </section>
+    </main>
+  </body>
+</html>
