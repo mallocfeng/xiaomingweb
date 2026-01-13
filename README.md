@@ -19,6 +19,10 @@ DB_NAME=xiaoming
 PORT=3000
 ```
 
+可选项（控制查询使用的表）：`DB_SCHEMA` 默认留空以避免自动加 `dbo`；填写后会拼接 `schema.table`，`DB_TABLE` 允许自定义具体表名，UI 和 API 一致使用该值。
+
+额外 TLS 相关配置：`DB_ENCRYPT` 默认 `false`（避免 TLS 服务器名称限制），需要加密时设为 `true` 并配合正确的 `DB_SERVER_NAME`（例如 `localhost`、`db.mycorp.com`），否则可继续保持 `false`。
+
 `PORT` 控制 Express 监听端口，其他值用于 `mssql` 连接池。
 
 ## 安装与调试

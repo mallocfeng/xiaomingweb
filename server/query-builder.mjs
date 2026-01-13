@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const STATION_KEYS = [
   'OP10',
   'OP20',
@@ -48,6 +52,9 @@ export function buildSearchQuery({
   limit = 100,
   sn,
   orderName
+  ,
+  tableSchema,
+  tableName
 } = {}) {
   const normalized = normalizeRange(rangeKey);
   const effectiveStart = startTime || normalized.startTime;
@@ -91,7 +98,19 @@ export function buildSearchQuery({
 
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   const finalLimit = Math.min(Math.max(limit, 1), 500);
-  const queryText = `SELECT TOP (${finalLimit}) * FROM dbo.TS70_246K ${where} ORDER BY StartTime DESC`;
+  const tableRef = buildTableReference(tableSchema, tableName);
+  const queryText = `SELECT TOP (${finalLimit}) * FROM ${tableRef} ${where} ORDER BY StartTime DESC`;
 
   return { queryText, parameters };
+}
+
+function buildTableReference(schemaOverride, tableOverride) {
+  const schemaFromEnv = process.env.DB_SCHEMA ?? 'dbo';
+  const table = process.env.DB_TABLE ?? 'TS70_246K';
+  const schema = schemaOverride ?? schemaFromEnv;
+  const resolvedTable = tableOverride?.trim() || table.trim();
+  if (schema && schema.trim().length) {
+    return `${schema.trim()}.${resolvedTable}`;
+  }
+  return table.trim();
 }
