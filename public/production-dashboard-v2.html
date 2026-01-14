@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>生产订单KanBan V2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --orange: #e1762f;
+      --orange-dark: #c95f1b;
+      --peach: #f4d7c6;
+      --peach-light: #f7e3d8;
+      --cream: #fdf5ef;
+      --green: #b9d8a5;
+      --gray: #5b4a3f;
+      --border: #c8b6a8;
+      --ink: #2c1f17;
+      --shadow: 0 8px 18px rgba(60, 40, 25, 0.18);
+      --panel-gap: clamp(6px, 1vw, 14px);
+      --panel-padding: clamp(8px, 1vw, 20px);
+      --body-padding: clamp(8px, 0.7vw, 16px);
+      --dash-max-height: calc(100vh - 2 * var(--body-padding));
+      --panel-radius: clamp(8px, 0.8vw, 14px);
+    }
+
+    html {
+      height: 100%;
+      font-size: clamp(15px, 1.1vw + 0.4vh, 26px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      background: radial-gradient(circle at top, #434343 0%, #2f2f2f 52%, #262626 100%);
+      padding: var(--body-padding);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 1rem;
+      line-height: 1.4;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .dashboard {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-width: none;
+      max-height: var(--dash-max-height);
+      border: 3px solid #1f1f1f;
+      background: linear-gradient(180deg, #f2efec 0%, #e8e2dd 100%);
+      box-shadow: 0 10px 0 #1f1f1f;
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) 1fr;
+      gap: var(--panel-gap);
+      padding: var(--panel-padding);
+      border-radius: calc(var(--panel-radius) + 2px);
+    }
+
+    .left-panel,
+    .main-panel {
+      background: #fdf8f4;
+      border: 2px solid rgba(168, 146, 132, 0.7);
+      box-shadow: var(--shadow);
+      border-radius: var(--panel-radius);
+    }
+
+    .left-panel {
+      display: grid;
+      grid-template-rows: 80px 1fr 130px;
+      gap: var(--panel-gap);
+      padding: var(--panel-padding);
+      min-height: 0;
+    }
+
+    .logo {
+      background: #c8151a;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-style: italic;
+      letter-spacing: 1px;
+      border: 2px solid #761112;
+      text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+    }
+
+    .panel-title {
+      background: var(--orange);
+      color: #fff;
+      font-weight: 700;
+      padding: 0.7rem 0.9rem;
+      border: 2px solid #a85119;
+      text-align: left;
+      font-size: 1.1rem;
+      border-radius: 6px;
+    }
+
+    .order-status {
+      border: 2px solid var(--border);
+      background: var(--cream);
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    .order-item {
+      padding: 0.7rem 0.9rem;
+      border-top: 1px solid #e6d2c4;
+      display: grid;
+      gap: 8px;
+    }
+
+    .order-item:first-of-type {
+      border-top: none;
+    }
+
+    .order-label {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .progress {
+      height: 16px;
+      border-radius: 4px;
+      background: #efefef;
+      border: 1px solid #b6a59a;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #f1e400, #ffe100);
+      width: 70%;
+    }
+
+    .progress.blue span {
+      background: linear-gradient(90deg, #2f6bd8, #4c88f0);
+      width: 85%;
+    }
+
+    .progress.gray span {
+      background: linear-gradient(90deg, #7b7b7b, #9b9b9b);
+      width: 62%;
+    }
+
+    .equipment-status {
+      border: 2px solid #7fa56e;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #2e4a2c;
+      border-radius: 10px;
+    }
+
+    .main-panel {
+      padding: var(--panel-padding);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) minmax(0, clamp(110px, 14vh, 190px));
+      gap: clamp(8px, 0.8vw, 12px);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--panel-gap);
+    }
+
+    .info-card {
+      background: #fdf1e6;
+      border: 2px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 60px;
+      gap: 0.6rem;
+      border-radius: 10px;
+    }
+
+    .info-label {
+      font-size: 0.9rem;
+      color: #6c4f3d;
+      white-space: nowrap;
+    }
+
+    .info-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2f1f16;
+      white-space: nowrap;
+    }
+
+    .table-wrap {
+      border: 2px solid var(--border);
+      background: linear-gradient(180deg, #f7e3d8 0%, #f3ddd1 100%);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0.35rem;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      --row-count: 12;
+      --table-font-scale: 1;
+      --table-max-scale: 1.1;
+      --thead-base: 40px;
+      --row-base: 30px;
+      --cell-font-base: 14px;
+      --thead-font-base: 15px;
+      --cell-pad-y-base: 6px;
+      --cell-pad-x-base: 6px;
+      --thead-height: calc(var(--thead-base) * var(--table-font-scale));
+      --row-height: calc(var(--row-base) * var(--table-font-scale));
+      --cell-font-size: calc(var(--cell-font-base) * var(--table-font-scale));
+      --thead-font-size: calc(var(--thead-font-base) * var(--table-font-scale));
+      --cell-pad-y: calc(var(--cell-pad-y-base) * var(--table-font-scale));
+      --cell-pad-x: calc(var(--cell-pad-x-base) * var(--table-font-scale));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      table-layout: fixed;
+    }
+
+    thead th,
+    tbody td {
+      padding: var(--cell-pad-y) var(--cell-pad-x);
+      line-height: 1.15;
+      word-break: break-word;
+    }
+
+    thead th {
+      font-size: var(--thead-font-size);
+      height: var(--thead-height);
+    }
+
+    tbody td {
+      font-size: var(--cell-font-size);
+      vertical-align: middle;
+    }
+
+    tbody tr {
+      height: var(--row-height);
+    }
+
+
+    .cell-stack {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.08rem, 0.25vh, 0.18rem);
+      line-height: 1.15;
+    }
+
+    .cell-stack small {
+      font-size: 0.72em;
+      opacity: 0.65;
+    }
+
+    thead th {
+      background: linear-gradient(180deg, #ea7f3b 0%, #d86a26 100%);
+      color: #fff;
+      border: 1px solid #d38c5b;
+      font-weight: 700;
+    }
+
+    tbody td {
+      border: 1px solid #edd5c6;
+      background: #f7e3d8;
+    }
+
+    tbody td:first-child {
+      font-weight: 700;
+      color: #5c3b2b;
+      background: #f2d0bd;
+    }
+
+    .highlight {
+      color: #d14a2b;
+      font-weight: 700;
+    }
+
+    .charts {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 220px;
+      gap: 10px;
+      align-items: stretch;
+      min-height: 0;
+      height: 100%;
+    }
+
+    .chart-card {
+      border: 2px solid var(--border);
+      background: #fffaf7;
+      padding: 6px;
+      box-shadow: var(--shadow);
+      height: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .legend {
+      border: 2px solid var(--border);
+      background: #fffaf7;
+      font-size: 12px;
+      padding: 0.55rem;
+      line-height: 1.45;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .legend div {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      border-bottom: 1px dashed #e3d2c7;
+      padding: 2px 0;
+    }
+
+    .legend div:last-child {
+      border-bottom: none;
+    }
+
+    .chart-card--pie {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+      min-height: 0;
+    }
+
+    .pie-tilt {
+      position: relative;
+      width: min(320px, 100%);
+      max-height: 200px;
+      aspect-ratio: 1 / 0.68;
+      height: min(200px, 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotateX(48deg) scaleY(0.86);
+      transform-origin: center;
+      filter: drop-shadow(0 18px 0 rgba(0, 0, 0, 0.15));
+    }
+
+    .pie-tilt::after {
+      content: "";
+      position: absolute;
+      width: 72%;
+      height: 18%;
+      bottom: -8%;
+      left: 14%;
+      background: radial-gradient(circle, rgba(0, 0, 0, 0.22), transparent 70%);
+      transform: rotateX(90deg);
+    }
+
+    #pieChart {
+      width: 100%;
+      height: 100%;
+    }
+
+    #barChart {
+      height: 100% !important;
+      width: 100% !important;
+    }
+
+    @media (max-width: 1100px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .left-panel {
+        grid-template-rows: auto auto auto;
+      }
+
+      .top-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .charts {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        height: auto;
+      }
+    }
+
+    @media (max-height: 900px) {
+      .main-panel {
+        gap: 6px;
+      }
+
+      .info-card {
+        min-height: 46px;
+        padding: 0.65rem 0.8rem;
+      }
+
+      .table-wrap {
+        padding: 0.25rem;
+        --thead-base: 36px;
+        --row-base: 26px;
+        --cell-font-base: 13px;
+        --thead-font-base: 14px;
+        --cell-pad-y-base: 5px;
+        --cell-pad-x-base: 5px;
+      }
+
+      .cell-stack {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+      }
+
+      .cell-stack small {
+        font-size: 0.68em;
+      }
+
+      tbody td {
+        line-height: 1.05;
+      }
+
+      .charts {
+        min-height: 100px;
+        height: 130px;
+        gap: 6px;
+      }
+    }
+
+    @media (max-height: 760px) {
+      html {
+        font-size: 14px;
+      }
+
+      .info-card {
+        min-height: 40px;
+        padding: 0.5rem 0.6rem;
+      }
+
+      .charts {
+        min-height: 70px;
+        height: 90px;
+        gap: 4px;
+      }
+
+      .legend {
+        font-size: 0.8rem;
+        line-height: 1.3;
+      }
+
+      .table-wrap {
+        --thead-base: 32px;
+        --row-base: 22px;
+        --cell-font-base: 12px;
+        --thead-font-base: 13px;
+        --cell-pad-y-base: 4px;
+        --cell-pad-x-base: 4px;
+      }
+
+      .cell-stack {
+        gap: 0.25rem;
+      }
+
+      .cell-stack small {
+        font-size: 0.65em;
+      }
+
+      tbody td {
+        line-height: 1.02;
+      }
+
+      .chart-card {
+        padding: 2px;
+      }
+
+      .pie-tilt {
+        max-width: 180px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 8px;
+      }
+
+      .dashboard {
+        padding: 10px;
+        border-width: 3px;
+      }
+
+      .panel-title {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="left-panel">
+      <div class="logo" data-logo>Danfoss</div>
+      <div class="order-status">
+        <div class="panel-title">订单状态</div>
+        <div class="order-status-list" data-order-status></div>
+      </div>
+      <div class="equipment-status" data-equipment-status>设备状态</div>
+    </aside>
+
+    <section class="main-panel">
+      <div class="top-bar" data-top-bar></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr data-table-head></tr>
+          </thead>
+          <tbody data-table-body></tbody>
+        </table>
+      </div>
+
+      <div class="charts">
+        <div class="chart-card">
+          <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-card chart-card--pie">
+          <div class="pie-tilt">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+        <div class="legend" data-legend></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module">
+    import { initTableSizing } from './production-dashboard-table.mjs';
+
+    const tableSizer = initTableSizing(document.querySelector('.table-wrap'));
+    const ChartJS = window.Chart;
+
+    const barCtx = document.getElementById('barChart');
+    const barChart = new ChartJS(barCtx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{ label: '产出', data: [], backgroundColor: '#3c78d8' }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#ead6c9' },
+            ticks: { color: '#5b4a3f', font: { size: 10 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#5b4a3f', font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    const pieCtx = document.getElementById('pieChart');
+    const pieChart = new ChartJS(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: [],
+        datasets: [{ data: [], backgroundColor: ['#36d27c', '#f1c232', '#f0672a'], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 14, font: { size: 12 } } }
+        }
+      }
+    });
+
+    const dataUrl = './production-dashboard-data.json';
+    const refreshInterval = 10000;
+
+    const buildInfoCard = (label, value) => {
+      const card = document.createElement('div');
+      card.className = 'info-card';
+      card.innerHTML = `<span class="info-label">${label}</span><span class="info-value">${value}</span>`;
+      return card;
+    };
+
+    const buildOrderItem = (item) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'order-item';
+      const progressClass = item.variant ? `progress ${item.variant}` : 'progress';
+      wrap.innerHTML = `
+        <div class="order-label">${item.label}</div>
+        <div class="${progressClass}"><span style="width:${item.progress}%"></span></div>
+      `;
+      return wrap;
+    };
+
+    const buildCell = (value) => {
+      if (value && typeof value === 'object') {
+        const lines = Array.isArray(value.lines) ? value.lines : [];
+        const extra = value.extra ? `<small>${value.extra}</small>` : '';
+        const lineHtml = lines.map((line) => `<span>${line}</span>`).join('');
+        return `<div class="cell-stack">${lineHtml}${extra}</div>`;
+      }
+      return value ?? '';
+    };
+
+    const updateTable = (table) => {
+      const headRow = document.querySelector('[data-table-head]');
+      const body = document.querySelector('[data-table-body]');
+      if (!headRow || !body) return;
+
+      headRow.innerHTML = '';
+      table.columns.forEach((column) => {
+        const th = document.createElement('th');
+        th.textContent = column;
+        headRow.appendChild(th);
+      });
+
+      body.innerHTML = '';
+      table.rows.forEach((row) => {
+        const tr = document.createElement('tr');
+        row.forEach((cell, index) => {
+          const td = document.createElement('td');
+          if (index === 4) {
+            td.classList.add('highlight');
+          }
+          td.innerHTML = buildCell(cell);
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+    };
+
+    const updateLegend = (items) => {
+      const legend = document.querySelector('[data-legend]');
+      if (!legend) return;
+      legend.innerHTML = '';
+      items.forEach((item) => {
+        const row = document.createElement('div');
+        row.innerHTML = `<span>${item.left}</span><span>${item.right}</span>`;
+        legend.appendChild(row);
+      });
+    };
+
+    const applyData = (data) => {
+      if (!data) return;
+
+      const topBar = document.querySelector('[data-top-bar]');
+      if (topBar) {
+        topBar.innerHTML = '';
+        data.topInfo.forEach((info) => {
+          topBar.appendChild(buildInfoCard(info.label, info.value));
+        });
+      }
+
+      const orderStatus = document.querySelector('[data-order-status]');
+      if (orderStatus) {
+        orderStatus.innerHTML = '';
+        data.orderStatus.forEach((item) => orderStatus.appendChild(buildOrderItem(item)));
+      }
+
+      const equipment = document.querySelector('[data-equipment-status]');
+      if (equipment) {
+        equipment.textContent = data.equipmentStatus;
+      }
+
+      updateTable(data.table);
+
+      if (data.barChart) {
+        barChart.data.labels = data.barChart.labels;
+        barChart.data.datasets[0].data = data.barChart.values;
+        barChart.update();
+      }
+
+      if (data.pieChart) {
+        pieChart.data.labels = data.pieChart.labels;
+        pieChart.data.datasets[0].data = data.pieChart.values;
+        pieChart.update();
+      }
+
+      updateLegend(data.legend);
+
+      tableSizer.update();
+    };
+
+    const loadData = async () => {
+      try {
+        const response = await fetch(`${dataUrl}?t=${Date.now()}`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const payload = await response.json();
+        applyData(payload);
+      } catch (error) {
+        console.warn('Failed to load dashboard data', error);
+      }
+    };
+
+    loadData();
+    setInterval(loadData, refreshInterval);
+  </script>
+</body>
+</html>
