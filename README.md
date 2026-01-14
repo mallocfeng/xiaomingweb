@@ -11,12 +11,12 @@
 复制 `.env.example` 为 `.env` 并填入真实信息：
 
 ```env
-DB_HOST=127.0.0.1
-DB_PORT=1433
-DB_USER=sa
-DB_PASSWORD=Admin12345
-DB_NAME=xiaoming
-PORT=3000
+DB_HOST=<your db host>
+DB_PORT=<your db port>
+DB_USER=<db user>
+DB_PASSWORD=<db password>
+DB_NAME=<database name>
+PORT=<app listen port>
 ```
 
 可选项（控制查询使用的表）：`DB_SCHEMA` 默认留空以避免自动加 `dbo`；填写后会拼接 `schema.table`，`DB_TABLE` 允许自定义具体表名，UI 和 API 一致使用该值。
