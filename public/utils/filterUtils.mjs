@@ -12,9 +12,14 @@ export const stationKeys = [
 
 export const rangePresets = [
   { key: 'LAST_HOUR', label: '最近 1 小时', offsetMinutes: 60 },
+  { key: 'LAST_1_HOUR', label: '最近 1 小时', offsetMinutes: 60 },
+  { key: 'LAST_2_HOURS', label: '最近 2 小时', offsetMinutes: 120 },
   { key: 'LAST_6_HOURS', label: '最近 6 小时', offsetMinutes: 360 },
+  { key: 'LAST_8_HOURS', label: '最近 8 小时', offsetMinutes: 480 },
   { key: 'LAST_24_HOURS', label: '最近 24 小时', offsetMinutes: 1440 },
+  { key: 'LAST_1_DAY', label: '最近 1 天', offsetMinutes: 1440 },
   { key: 'LAST_72_HOURS', label: '最近 72 小时', offsetMinutes: 4320 },
+  { key: 'LAST_7_DAYS', label: '最近 7 天', offsetMinutes: 10080 },
   { key: 'TODAY', label: '当天', snapshot: 'today' }
 ];
 

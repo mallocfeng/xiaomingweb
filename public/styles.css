@@ -27,6 +27,71 @@ body {
   color: var(--text);
 }
 
+body.theme-caramel {
+  color-scheme: light;
+  --bg: #f1e7df;
+  --bg-soft: #f7efe8;
+  --panel: rgba(253, 248, 242, 0.92);
+  --panel-glow: rgba(120, 90, 60, 0.08);
+  --accent: #e1762f;
+  --accent-2: #f1c232;
+  --text: #2c1f17;
+  --muted: #7a6454;
+  --border: rgba(140, 116, 98, 0.25);
+  --success: #2f9a5d;
+  --warn: #d1492b;
+  background: radial-gradient(circle at 20% 20%, rgba(225, 118, 47, 0.2), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(241, 194, 50, 0.25), transparent 40%),
+    linear-gradient(140deg, #efe1d8 0%, #f5ebe2 45%, #efe4da 100%);
+}
+
+body.theme-caramel .hero-content::after {
+  background: radial-gradient(circle, rgba(225, 118, 47, 0.18), transparent 55%);
+}
+
+body.theme-caramel .info-pill,
+body.theme-caramel .filter-card,
+body.theme-caramel .results-panel,
+body.theme-caramel .result-card,
+body.theme-caramel .station-card {
+  background: rgba(255, 250, 245, 0.92);
+  border-color: rgba(140, 116, 98, 0.2);
+}
+
+body.theme-caramel .status-button,
+body.theme-caramel .pill-field input,
+body.theme-caramel .pill-field select {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(140, 116, 98, 0.35);
+  color: var(--text);
+}
+
+body.theme-caramel .status-button {
+  color: #624738;
+}
+
+body.theme-caramel .chip {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(140, 116, 98, 0.3);
+  color: #624738;
+}
+
+body.theme-caramel .flush-button {
+  color: #2c1f17;
+  box-shadow: 0 20px 40px rgba(225, 118, 47, 0.25);
+}
+
+body.theme-caramel .range-button {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(140, 116, 98, 0.35);
+  color: #624738;
+}
+
+body.theme-caramel .range-button.active {
+  background: linear-gradient(120deg, rgba(225, 118, 47, 0.3), rgba(241, 194, 50, 0.25));
+  border-color: rgba(225, 118, 47, 0.7);
+}
+
 .aurora-shell {
   display: flex;
   flex-direction: column;
@@ -53,6 +118,28 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.skin-toggle {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.skin-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .hero-content::after {
@@ -117,7 +204,7 @@ body {
   border-radius: 32px;
   padding: 2rem;
   border: 1px solid var(--border);
-  box-shadow: 0 30px 80px rgba(5, 5, 10, 0.7);
+  box-shadow: 0 6px 14px rgba(5, 5, 10, 0.18);
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -168,6 +255,36 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.range-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.range-button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.range-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.range-button.active {
+  background: linear-gradient(120deg, rgba(125, 242, 255, 0.28), rgba(255, 117, 194, 0.18));
+  border-color: rgba(125, 242, 255, 0.8);
+  color: var(--text);
 }
 
 .datetime-grid {
@@ -221,7 +338,7 @@ body {
   flex-direction: column;
   gap: 0.6rem;
   min-height: 120px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
 }
 
 .station-card strong {
@@ -272,7 +389,7 @@ body {
 
 .status-button.active {
   transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
 }
 
 .status-button.active .checkmark {
@@ -304,7 +421,7 @@ body {
   color: #050407;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 20px 40px rgba(125, 242, 255, 0.3);
+  box-shadow: 0 8px 18px rgba(125, 242, 255, 0.18);
   transition: transform 0.2s ease;
 }
 
@@ -323,7 +440,7 @@ body {
   padding: 2rem;
   background: rgba(8, 8, 20, 0.8);
   border: 1px solid var(--border);
-  box-shadow: 0 40px 90px rgba(3, 3, 10, 0.8);
+  box-shadow: 0 8px 18px rgba(3, 3, 10, 0.2);
 }
 
 .results-header {
@@ -368,7 +485,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
   animation: floatUp 0.8s ease forwards;
 }
 

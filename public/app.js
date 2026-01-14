@@ -12,6 +12,8 @@ const resultsGrid = document.querySelector('#results-grid');
 const resultCount = document.querySelector('#result-count');
 const fetchButton = document.querySelector('#fetch-button');
 const maxRecordValue = document.querySelector('#max-record-value');
+const skinToggle = document.querySelector('#skin-toggle');
+const rangeButtons = document.querySelectorAll('.range-button');
 
 const stationState = stationKeys.map((station) => ({ key: station.key, ok: true, ng: true }));
 
@@ -173,13 +175,21 @@ function getRangeBoundsFromInputs() {
 }
 
 function setDefaultRangeInputs() {
-  const bounds = deriveRangeBounds('LAST_24_HOURS');
+  applyRangePreset('LAST_24_HOURS');
+}
+
+function applyRangePreset(rangeKey) {
+  const bounds = deriveRangeBounds(rangeKey);
   if (bounds.startTime) {
     startInput.value = formatLocalDatetime(bounds.startTime);
   }
   if (bounds.stopTime) {
     endInput.value = formatLocalDatetime(bounds.stopTime);
   }
+
+  rangeButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.range === rangeKey);
+  });
 }
 
 function init() {
@@ -188,6 +198,35 @@ function init() {
   renderResults([]);
   if (maxRecordValue) {
     maxRecordValue.textContent = limitSelect.value;
+  }
+
+  if (skinToggle) {
+    const body = document.body;
+    const savedTheme = localStorage.getItem('ts70-theme');
+    const startCaramel = savedTheme ? savedTheme === 'caramel' : true;
+    if (startCaramel) {
+      body.classList.add('theme-caramel');
+      skinToggle.textContent = '皮肤：Caramel';
+      skinToggle.setAttribute('aria-pressed', 'true');
+    }
+
+    skinToggle.addEventListener('click', () => {
+      const isCaramel = body.classList.toggle('theme-caramel');
+      localStorage.setItem('ts70-theme', isCaramel ? 'caramel' : 'aurora');
+      skinToggle.textContent = isCaramel ? '皮肤：Caramel' : '皮肤：Aurora';
+      skinToggle.setAttribute('aria-pressed', String(isCaramel));
+    });
+  }
+
+  if (rangeButtons.length) {
+    rangeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const rangeKey = button.dataset.range;
+        if (rangeKey) {
+          applyRangePreset(rangeKey);
+        }
+      });
+    });
   }
 }
 
