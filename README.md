@@ -4,7 +4,7 @@
 
 ## 目录
 - `server/`：Express 服务、数据库连接、查询构造器与简单测试
-- `public/`：静态页面（CSS + JS）展示筛选与结果卡片
+- `public/`：静态页面（CSS + JS）展示筛选与结果卡片，并包含两个 Dashboard 版本
 - `tests/`：纯前端逻辑测试（filterUtils）
 
 ## 环境变量
@@ -34,7 +34,7 @@ npm run test       # 执行所有 node:test 套件
 npm run start      # 生产启动
 ```
 
-## API 摘要
+## API 与前端摘要
 
 - `GET /api/status`：返回在线状态。
 - `POST /api/search`：可传入 `rangeKey`、`startTime`、`stopTime`、`sn`、`orderName`、`stationFilters`、`limit`。
@@ -43,26 +43,24 @@ npm run start      # 生产启动
 
 ## 前端特点
 
-1. **时间范围控制**：用两个 `datetime-local` 输入指定开始/结束时间（最小单位秒），如果留空会默认取最近 24 小时，提交时会把对应的 ISO 日期字符串发送到 API。
-2. **工站 OK/NG 筛选**：每个工站提供两个勾选项（✅ OK / ✅ NG），默认都勾选，且不允许两个都取消。勾选 OK 只保留该站 OK 记录，勾选 NG 只保留 NG 记录，两个都勾则两类都返回；该站 `Result` 为空时不会被筛掉。
-3. **结果卡片**：返回的 SN/订单信息、时间与人员固化在卡片中，底部以动效出现的 badge 显示各工站的 OK/NG 状态。
-4. **交互反馈**：查询时按钮禁用、状态提示变化，并在 `results` 区展示“无数据”提示。
+1. **双版本界面**：
+   - `public/index.html`（Aurora / Caramel 皮肤，可切换）内含更柔和的表单、结果卡片、阴影，适配 `styles.css`。
+   - `public/production-dashboard.html`（已优化的 V1）和 `public/production-dashboard-v2.html`（JSON 驱动、10s 自动刷新）分别提供传统卡片视图与新配色的看板。
+2. **时间范围快捷选择**：在查询面板顶部新增 1h/2h/8h/1d/7d 预设按钮，点击即更新两个 `datetime-local` 输入，提交时也带上序列化后的 ISO 时间。
+3. **工站 OK/NG 筛选**：每个工站提供两个状态按钮，默认都选，点击会变色且不会同时取消两个状态。
+4. **记录上限联动**：下拉 “最多记录” 会同步到右上“最大记录”展示。
+5. **皮肤切换（Aurora/Caramel）**：右上按钮切换配色，Caramel 为默认主题且会保存到 `localStorage`。
+6. **表格 + 图表自适应（production-dashboard-v2）**：表格会监测容器高度并缩放，Pie/Bar 图从 `production-dashboard-data.json` 读取内容，10 秒自动刷新，Legend、图例字体随主题调色。
 
-## 数据库表结构（已有）
-
-```sql
-CREATE TABLE dbo.TS70_246K (...)
-```
-
-确保表已存在于目标数据库后再运行本程序。
+> **不在 README 中保留任何生产数据库凭据或明文密码。**
 
 ## 技术栈
 
-- Node.js 20+、Express、mssql
+- Node.js 20+、Express、`mssql`
 - 原生 `node:test` + `supertest`
 - 纯前端 ES 模块 + CSS 动画
 
 ## 后续建议
 
-- 在生产部署时为 `.env` 提供安全凭据（例如用 secrets 管理）。
-- 可以加上缓存层或分页策略以应对大量数据。EOF
+- 生产环境可借助 `.env` 之外的 secret 管理工具（如 Vault/Secrets Manager）保护数据库凭证。
+- 针对大数据量，建议在 `POST /api/search` 引入分页/缓存或在 API 端利用索引与 `TOP` 限制。
