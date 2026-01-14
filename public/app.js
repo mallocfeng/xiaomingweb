@@ -11,6 +11,7 @@ const statusMessage = document.querySelector('#status-message');
 const resultsGrid = document.querySelector('#results-grid');
 const resultCount = document.querySelector('#result-count');
 const fetchButton = document.querySelector('#fetch-button');
+const maxRecordValue = document.querySelector('#max-record-value');
 
 const stationState = stationKeys.map((station) => ({ key: station.key, ok: true, ng: true }));
 
@@ -69,6 +70,12 @@ stationGrid.addEventListener('click', (event) => {
 filterForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   await executeSearch();
+});
+
+limitSelect.addEventListener('change', () => {
+  if (maxRecordValue) {
+    maxRecordValue.textContent = limitSelect.value;
+  }
 });
 
 async function executeSearch() {
@@ -179,6 +186,9 @@ function init() {
   setDefaultRangeInputs();
   buildStationCards();
   renderResults([]);
+  if (maxRecordValue) {
+    maxRecordValue.textContent = limitSelect.value;
+  }
 }
 
 init();
