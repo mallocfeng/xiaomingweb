@@ -12,6 +12,7 @@ const resultsGrid = document.querySelector('#results-grid');
 const resultCount = document.querySelector('#result-count');
 const fetchButton = document.querySelector('#fetch-button');
 const maxRecordValue = document.querySelector('#max-record-value');
+const resultsPanel = document.querySelector('.results-panel');
 const skinToggle = document.querySelector('#skin-toggle');
 const rangeButtons = document.querySelectorAll('.range-button');
 
@@ -107,6 +108,9 @@ async function executeSearch() {
     const result = await response.json();
     statusMessage.textContent = `共找到 ${result.count} 条记录，展示 ${Math.min(result.count, payload.limit)} 条。`;
     renderResults(result.data);
+    if (resultsPanel) {
+      resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   } catch (error) {
     statusMessage.textContent = '查询异常，请检查服务状态。';
   } finally {
@@ -127,29 +131,31 @@ function renderResults(records = []) {
       const stopRange = record.StopTime ? new Date(record.StopTime).toLocaleString('zh-CN') : '进行中';
       const statuses = stationKeys
         .map((station) => {
-          const rawValue = record[`${station.key}Result`];
-          const statusText = rawValue === 1 ? 'OK' : rawValue === 0 ? 'NG' : '—';
-          const chipClass = statusText === 'OK' ? 'ok' : statusText === 'NG' ? 'ng' : '';
-          return `
-            <span class="status-chip ${chipClass}">
-              <span>${statusText}</span>
+        const rawValue = record[`${station.key}Result`];
+        const statusText = rawValue === 1 ? 'OK' : rawValue === 0 ? 'NG' : '—';
+        const chipClass = statusText === 'OK' ? 'ok' : statusText === 'NG' ? 'ng' : '';
+        return `
+            <span class="status-step ${chipClass}" data-key="${station.key}">
+              <span class="status-label">${statusText}</span>
               <small>${station.key}</small>
             </span>`;
-        })
-        .join('');
+      })
+      .join('');
 
       return `
         <article class="result-card" style="animation-delay:${index * 0.08}s">
-          <h4>${record.SN || '未知 SN'}</h4>
-          <div class="meta">
-            <span>订单：${record.OrderName || '—'}</span>
-            <span>${latestRange}</span>
+          <div class="record-summary">
+            <h4>${record.SN || '未知 SN'}</h4>
+            <div class="meta">
+              <span>订单：${record.OrderName || '—'}</span>
+              <span>${latestRange}</span>
+            </div>
+            <div class="meta">
+              <span>操作者：${record.Operator || '匿名'}</span>
+              <span>结束：${stopRange}</span>
+            </div>
           </div>
-          <div class="meta">
-            <span>操作者：${record.Operator || '匿名'}</span>
-            <span>结束：${stopRange}</span>
-          </div>
-          <div class="status-row">
+          <div class="status-flow">
             ${statuses}
           </div>
         </article>`;

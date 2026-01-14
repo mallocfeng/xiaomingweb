@@ -27,46 +27,47 @@
               把控每一站 OK/NG，筛选 SN、订单和时间，实时呈现 TS70 流程的血脉。
             </p>
           </div>
-          <div class="info-strip">
-            <article class="info-pill">
+          <div class="hero-data-row" aria-label="数据中枢卡片">
+            <article class="data-card">
               <span>服务器</span>
               <strong>127.0.0.1</strong>
             </article>
-            <article class="info-pill">
+            <article class="data-card">
               <span>数据库</span>
               <strong>TS70_246K</strong>
             </article>
-            <article class="info-pill">
+            <article class="data-card">
               <span>最大记录</span>
               <strong id="max-record-value">100</strong>
             </article>
           </div>
         </div>
       </section>
-      <section class="workspace">
-        <div class="control-column">
-          <div class="filter-card">
-            <div class="filter-header">
-              <h2>查询面板</h2>
+
+      <section class="query-section">
+        <div class="filter-card">
+          <div class="filter-header">
+            <h2>查询面板</h2>
+          </div>
+          <form id="filter-form">
+            <div class="range-presets">
+              <button type="button" class="range-button" data-range="LAST_1_HOUR">1 小时</button>
+              <button type="button" class="range-button" data-range="LAST_2_HOURS">2 小时</button>
+              <button type="button" class="range-button" data-range="LAST_8_HOURS">8 小时</button>
+              <button type="button" class="range-button" data-range="LAST_1_DAY">1 天</button>
+              <button type="button" class="range-button" data-range="LAST_7_DAYS">1 周</button>
             </div>
-            <form id="filter-form">
-              <div class="range-presets">
-                <button type="button" class="range-button" data-range="LAST_1_HOUR">1 小时</button>
-                <button type="button" class="range-button" data-range="LAST_2_HOURS">2 小时</button>
-                <button type="button" class="range-button" data-range="LAST_8_HOURS">8 小时</button>
-                <button type="button" class="range-button" data-range="LAST_1_DAY">1 天</button>
-                <button type="button" class="range-button" data-range="LAST_7_DAYS">1 周</button>
-              </div>
-              <div class="datetime-grid">
-                <label class="pill-field">
-                  <span>开始时间</span>
-                  <input type="datetime-local" id="start-time" step="1" />
-                </label>
-                <label class="pill-field">
-                  <span>结束时间</span>
-                  <input type="datetime-local" id="end-time" step="1" />
-                </label>
-              </div>
+            <div class="datetime-grid">
+              <label class="pill-field">
+                <span>开始时间</span>
+                <input type="datetime-local" id="start-time" step="1" />
+              </label>
+              <label class="pill-field">
+                <span>结束时间</span>
+                <input type="datetime-local" id="end-time" step="1" />
+              </label>
+            </div>
+            <div class="pill-row">
               <label class="pill-field">
                 <span>SN/序列号</span>
                 <input type="text" id="sn-input" placeholder="例如：SN2026-0001" />
@@ -85,25 +86,26 @@
                   <option value="100">100</option>
                 </select>
               </label>
-              <div class="station-legend">
-                <p>选择需要过滤的工站状态（最多 5 种范围 + OK/NG）</p>
-              </div>
-              <div id="station-grid" class="station-grid"></div>
-              <button type="submit" id="fetch-button" class="flush-button">立刻查询</button>
-              <p class="helper" id="status-message">准备好后点击查询。</p>
-            </form>
-          </div>
-        </div>
-        <section class="results-panel">
-          <header class="results-header">
-            <div>
-              <p class="label">查询结果</p>
-              <h3 id="result-count">0 条记录</h3>
             </div>
-            <span class="pulse"></span>
-          </header>
-          <div id="results-grid" class="results-grid"></div>
-        </section>
+            <div class="station-legend">
+              <p>选择需要过滤的工站状态（最多 5 种范围 + OK/NG）</p>
+            </div>
+            <div id="station-grid" class="station-grid"></div>
+            <button type="submit" id="fetch-button" class="flush-button">立刻查询</button>
+            <p class="helper" id="status-message">准备好后点击查询。</p>
+          </form>
+        </div>
+      </section>
+
+      <section class="results-panel">
+        <header class="results-header">
+          <div>
+            <p class="label">查询结果</p>
+            <h3 id="result-count">0 条记录</h3>
+          </div>
+          <span class="pulse"></span>
+        </header>
+        <div id="results-grid" class="results-grid"></div>
       </section>
     </main>
   </body>
