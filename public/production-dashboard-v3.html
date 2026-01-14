@@ -717,11 +717,16 @@
     const ChartJS = window.Chart;
 
     const barCtx = document.getElementById('barChart');
+    const barGradient = barCtx
+      .getContext('2d')
+      .createLinearGradient(0, 0, 0, barCtx.height || 220);
+    barGradient.addColorStop(0, '#4ac6c2');
+    barGradient.addColorStop(1, '#0e625f');
     const barChart = new ChartJS(barCtx, {
       type: 'bar',
       data: {
         labels: [],
-        datasets: [{ label: '产出', data: [], backgroundColor: '#007aff', borderRadius: 4 }]
+        datasets: [{ label: '产出', data: [], backgroundColor: barGradient, borderRadius: 4 }]
       },
       options: {
         responsive: true,
