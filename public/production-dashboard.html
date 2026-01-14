@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>生产订单KanBan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --orange: #e1762f;
+      --orange-dark: #c95f1b;
+      --peach: #f4d7c6;
+      --peach-light: #f7e3d8;
+      --cream: #fdf5ef;
+      --green: #b9d8a5;
+      --gray: #5b4a3f;
+      --border: #c8b6a8;
+      --shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+      --panel-gap: clamp(6px, 1vw, 14px);
+      --panel-padding: clamp(8px, 1vw, 20px);
+      --body-padding: clamp(8px, 0.7vw, 16px);
+      --dash-max-height: calc(100vh - 2 * var(--body-padding));
+    }
+
+    html {
+      height: 100%;
+      font-size: clamp(15px, 1.1vw + 0.4vh, 26px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      background: #3c3c3c;
+      padding: var(--body-padding);
+      color: #2f1f16;
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 1rem;
+      line-height: 1.4;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .dashboard {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-width: none;
+      max-height: var(--dash-max-height);
+      border: 4px solid #1f1f1f;
+      background: #ececec;
+      box-shadow: 0 6px 0 #1f1f1f;
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) 1fr;
+      gap: var(--panel-gap);
+      padding: var(--panel-padding);
+    }
+
+    .left-panel,
+    .main-panel {
+      background: #fdf8f4;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .left-panel {
+      display: grid;
+      grid-template-rows: 80px 1fr 130px;
+      gap: var(--panel-gap);
+      padding: var(--panel-padding);
+      min-height: 0;
+    }
+
+    .logo {
+      background: #c8151a;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-style: italic;
+      letter-spacing: 1px;
+      border: 2px solid #761112;
+      text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-title {
+      background: var(--orange);
+      color: #fff;
+      font-weight: 700;
+      padding: 0.7rem 0.9rem;
+      border: 2px solid #a85119;
+      text-align: left;
+      font-size: 1.1rem;
+    }
+
+    .order-status {
+      border: 2px solid var(--border);
+      background: var(--cream);
+      overflow: hidden;
+    }
+
+    .order-item {
+      padding: 0.7rem 0.9rem;
+      border-top: 1px solid #e6d2c4;
+      display: grid;
+      gap: 8px;
+    }
+
+    .order-item:first-of-type {
+      border-top: none;
+    }
+
+    .order-label {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .progress {
+      height: 16px;
+      border-radius: 4px;
+      background: #efefef;
+      border: 1px solid #b6a59a;
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #f1e400, #ffe100);
+      width: 70%;
+    }
+
+    .progress.blue span {
+      background: linear-gradient(90deg, #2f6bd8, #4c88f0);
+      width: 85%;
+    }
+
+    .progress.gray span {
+      background: linear-gradient(90deg, #7b7b7b, #9b9b9b);
+      width: 62%;
+    }
+
+    .equipment-status {
+      border: 2px solid #7fa56e;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #2e4a2c;
+    }
+
+    .main-panel {
+      padding: var(--panel-padding);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: clamp(8px, 0.8vw, 12px);
+      min-height: 0;
+    }
+
+    .top-bar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--panel-gap);
+    }
+
+    .info-card {
+      background: #fdf1e6;
+      border: 2px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 60px;
+      gap: 0.6rem;
+    }
+
+    .info-label {
+      font-size: 0.9rem;
+      color: #6c4f3d;
+      white-space: nowrap;
+    }
+
+    .info-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2f1f16;
+      white-space: nowrap;
+    }
+
+    .table-wrap {
+      border: 2px solid var(--border);
+      background: var(--peach-light);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0.35rem;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      --row-count: 12;
+      --table-font-scale: 1;
+      --table-max-scale: 1.1;
+      --thead-base: 40px;
+      --row-base: 30px;
+      --cell-font-base: 14px;
+      --thead-font-base: 15px;
+      --cell-pad-y-base: 6px;
+      --cell-pad-x-base: 6px;
+      --thead-height: calc(var(--thead-base) * var(--table-font-scale));
+      --row-height: calc(var(--row-base) * var(--table-font-scale));
+      --cell-font-size: calc(var(--cell-font-base) * var(--table-font-scale));
+      --thead-font-size: calc(var(--thead-font-base) * var(--table-font-scale));
+      --cell-pad-y: calc(var(--cell-pad-y-base) * var(--table-font-scale));
+      --cell-pad-x: calc(var(--cell-pad-x-base) * var(--table-font-scale));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      table-layout: fixed;
+    }
+
+    thead th,
+    tbody td {
+      padding: var(--cell-pad-y) var(--cell-pad-x);
+      line-height: 1.15;
+      word-break: break-word;
+    }
+
+    thead th {
+      font-size: var(--thead-font-size);
+      height: var(--thead-height);
+    }
+
+    tbody td {
+      font-size: var(--cell-font-size);
+      vertical-align: middle;
+    }
+
+    tbody tr {
+      height: var(--row-height);
+    }
+
+
+    .cell-stack {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.08rem, 0.25vh, 0.18rem);
+      line-height: 1.15;
+    }
+
+    .cell-stack small {
+      font-size: 0.72em;
+      opacity: 0.65;
+    }
+
+    thead th {
+      background: var(--orange);
+      color: #fff;
+      border: 1px solid #d38c5b;
+      font-weight: 700;
+    }
+
+    tbody td {
+      border: 1px solid #edd5c6;
+      background: #f7e3d8;
+    }
+
+    tbody td:first-child {
+      font-weight: 700;
+      color: #5c3b2b;
+      background: #f2d0bd;
+    }
+
+    .highlight {
+      color: #d14a2b;
+      font-weight: 700;
+    }
+
+    .charts {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 220px;
+      gap: 10px;
+      align-items: stretch;
+      min-height: clamp(90px, 12vh, 150px);
+      height: clamp(120px, 15vh, 200px);
+    }
+
+    .chart-card {
+      border: 2px solid var(--border);
+      background: #fffaf7;
+      padding: 4px;
+      box-shadow: var(--shadow);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .legend {
+      border: 2px solid var(--border);
+      background: #fffaf7;
+      font-size: 1rem;
+      padding: 0.65rem;
+      line-height: 1.6;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .legend div {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #e3d2c7;
+      padding: 2px 0;
+    }
+
+    .legend div:last-child {
+      border-bottom: none;
+    }
+
+    .chart-card--pie {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pie-tilt {
+      position: relative;
+      width: 100%;
+      max-width: 280px;
+      aspect-ratio: 1.8 / 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotateX(55deg) scaleY(0.75);
+      transform-origin: center;
+      filter: drop-shadow(0 18px 0 rgba(0, 0, 0, 0.15));
+    }
+
+    .pie-tilt::after {
+      content: "";
+      position: absolute;
+      width: 72%;
+      height: 18%;
+      bottom: -8%;
+      left: 14%;
+      background: radial-gradient(circle, rgba(0, 0, 0, 0.22), transparent 70%);
+      transform: rotateX(90deg);
+    }
+
+    #pieChart {
+      width: 100%;
+      height: 100%;
+    }
+
+    #barChart {
+      height: 100% !important;
+      width: 100% !important;
+    }
+
+    @media (max-width: 1100px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .left-panel {
+        grid-template-rows: auto auto auto;
+      }
+
+      .top-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .charts {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        height: auto;
+      }
+    }
+
+    @media (max-height: 900px) {
+      .main-panel {
+        gap: 6px;
+      }
+
+      .info-card {
+        min-height: 46px;
+        padding: 0.65rem 0.8rem;
+      }
+
+      .table-wrap {
+        padding: 0.25rem;
+        --thead-base: 36px;
+        --row-base: 26px;
+        --cell-font-base: 13px;
+        --thead-font-base: 14px;
+        --cell-pad-y-base: 5px;
+        --cell-pad-x-base: 5px;
+      }
+
+      .cell-stack {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+      }
+
+      .cell-stack small {
+        font-size: 0.68em;
+      }
+
+      tbody td {
+        line-height: 1.05;
+      }
+
+      .charts {
+        min-height: 100px;
+        height: 130px;
+        gap: 6px;
+      }
+    }
+
+    @media (max-height: 760px) {
+      html {
+        font-size: 14px;
+      }
+
+      .info-card {
+        min-height: 40px;
+        padding: 0.5rem 0.6rem;
+      }
+
+      .charts {
+        min-height: 70px;
+        height: 90px;
+        gap: 4px;
+      }
+
+      .legend {
+        font-size: 0.8rem;
+        line-height: 1.3;
+      }
+
+      .table-wrap {
+        --thead-base: 32px;
+        --row-base: 22px;
+        --cell-font-base: 12px;
+        --thead-font-base: 13px;
+        --cell-pad-y-base: 4px;
+        --cell-pad-x-base: 4px;
+      }
+
+      .cell-stack {
+        gap: 0.25rem;
+      }
+
+      .cell-stack small {
+        font-size: 0.65em;
+      }
+
+      tbody td {
+        line-height: 1.02;
+      }
+
+      .chart-card {
+        padding: 2px;
+      }
+
+      .pie-tilt {
+        max-width: 180px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 8px;
+      }
+
+      .dashboard {
+        padding: 10px;
+        border-width: 3px;
+      }
+
+      .panel-title {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <aside class="left-panel">
+      <div class="logo">Danfoss</div>
+      <div class="order-status">
+        <div class="panel-title">订单状态</div>
+        <div class="order-item">
+          <div class="order-label">订单号1</div>
+          <div class="progress"><span></span></div>
+        </div>
+        <div class="order-item">
+          <div class="order-label">订单号2</div>
+          <div class="progress gray"><span></span></div>
+        </div>
+        <div class="order-item">
+          <div class="order-label">订单号3</div>
+          <div class="progress blue"><span></span></div>
+        </div>
+      </div>
+      <div class="equipment-status">设备状态</div>
+    </aside>
+
+    <section class="main-panel">
+      <div class="top-bar">
+        <div class="info-card">
+          <span class="info-label">区域：</span>
+          <span class="info-value">华北</span>
+        </div>
+        <div class="info-card">
+          <span class="info-label">日期：</span>
+          <span class="info-value">2024/02/01</span>
+        </div>
+        <div class="info-card">
+          <span class="info-label">班次：</span>
+          <span class="info-value">一班</span>
+        </div>
+        <div class="info-card">
+          <span class="info-label">负责人：</span>
+          <span class="info-value">李工</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>时间段</th>
+              <th>零件号</th>
+              <th>计划数量 - 累计计划数量</th>
+              <th>实际产出 - 累计实际产出</th>
+              <th>差异</th>
+              <th>缺陷产品数量</th>
+              <th>生产效率</th>
+              <th>人力安排（计划/实际）</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>7:00-8:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计3</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计3</small>
+                </div>
+              </td>
+              <td class="highlight">0</td>
+              <td>1</td>
+              <td>93%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>8:00-9:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>4</span>
+                  <small>累计7</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>7</span>
+                  <small>累计10</small>
+                </div>
+              </td>
+              <td class="highlight">1</td>
+              <td>0</td>
+              <td>91%</td>
+              <td>4 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>9:00-10:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计10</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>10</span>
+                  <small>累计20</small>
+                </div>
+              </td>
+              <td class="highlight">-1</td>
+              <td>2</td>
+              <td>90%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>10:00-11:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>4</span>
+                  <small>累计14</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>14</span>
+                  <small>累计34</small>
+                </div>
+              </td>
+              <td class="highlight">2</td>
+              <td>3</td>
+              <td>92%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>11:00-12:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>4</span>
+                  <small>累计18</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>18</span>
+                  <small>累计52</small>
+                </div>
+              </td>
+              <td class="highlight">0</td>
+              <td>4</td>
+              <td>89%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>12:00-13:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>4</span>
+                  <small>累计22</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>22</span>
+                  <small>累计74</small>
+                </div>
+              </td>
+              <td class="highlight">1</td>
+              <td>3</td>
+              <td>90%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>13:00-14:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计25</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>24</span>
+                  <small>累计98</small>
+                </div>
+              </td>
+              <td class="highlight">0</td>
+              <td>2</td>
+              <td>88%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>14:00-15:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计28</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>25</span>
+                  <small>累计123</small>
+                </div>
+              </td>
+              <td class="highlight">-1</td>
+              <td>1</td>
+              <td>90%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>15:00-16:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计31</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>25</span>
+                  <small>累计148</small>
+                </div>
+              </td>
+              <td class="highlight">2</td>
+              <td>0</td>
+              <td>91%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>16:00-17:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计34</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>25</span>
+                  <small>累计173</small>
+                </div>
+              </td>
+              <td class="highlight">1</td>
+              <td>0</td>
+              <td>89%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>17:00-18:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计37</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>25</span>
+                  <small>累计198</small>
+                </div>
+              </td>
+              <td class="highlight">0</td>
+              <td>0</td>
+              <td>90%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>18:00-19:00</td>
+              <td>PVM</td>
+              <td>
+                <div class="cell-stack">
+                  <span>3</span>
+                  <small>累计40</small>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <span>25</span>
+                  <small>累计223</small>
+                </div>
+              </td>
+              <td class="highlight">0</td>
+              <td>0</td>
+              <td>90%</td>
+              <td>3 / 3</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="charts">
+        <div class="chart-card">
+          <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-card chart-card--pie">
+          <div class="pie-tilt">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+        <div class="legend">
+          <div><span>24-2-1</span><span>77% 12% 11%</span></div>
+          <div><span>24-2-2</span><span>77% 12% 11%</span></div>
+          <div><span>24-2-3</span><span>77% 12% 11%</span></div>
+          <div><span>24-2-4</span><span>77% 12% 11%</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module">
+    import { initTableSizing } from './production-dashboard-table.mjs';
+
+    initTableSizing(document.querySelector('.table-wrap'));
+
+    const ChartJS = window.Chart;
+    const barCtx = document.getElementById('barChart');
+    new ChartJS(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['1/30', '1/31', '2/1', '2/2', '2/3', '2/4', '2/5', '2/6', '2/7'],
+        datasets: [
+          {
+            label: '产出',
+            data: [6, 9, 5, 7, 6, 8, 7, 5, 6],
+            backgroundColor: '#3c78d8'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#ead6c9' },
+            ticks: { color: '#5b4a3f', font: { size: 10 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#5b4a3f', font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    const pieCtx = document.getElementById('pieChart');
+    new ChartJS(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: ['达成', '延误', '异常'],
+        datasets: [
+          {
+            data: [52, 28, 20],
+            backgroundColor: ['#36d27c', '#f1c232', '#f0672a'],
+            borderWidth: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
