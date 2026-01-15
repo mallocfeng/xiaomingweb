@@ -727,6 +727,22 @@
         import { initTableSizing } from './production-dashboard-table.mjs';
 
         const tableSizer = initTableSizing(document.querySelector('.table-container'));
+        let tableRefreshTimer = null;
+        let isTableRefreshing = false;
+
+        const triggerTableRefresh = () => {
+            const tableContainer = document.querySelector('.table-container');
+            if (!tableContainer || isTableRefreshing) return;
+            isTableRefreshing = true;
+            tableContainer.classList.add('is-refreshing');
+            if (tableRefreshTimer) {
+                clearTimeout(tableRefreshTimer);
+            }
+            tableRefreshTimer = setTimeout(() => {
+                tableContainer.classList.remove('is-refreshing');
+                isTableRefreshing = false;
+            }, 900);
+        };
 
         // Initialize ChartJS defaults for better styling
         Chart.defaults.font.family = "'Outfit', 'Inter', sans-serif";
@@ -938,15 +954,11 @@
 
         const loadData = async () => {
             try {
-                const tableContainer = document.querySelector('.table-container');
-                if (tableContainer) {
-                    tableContainer.classList.add('is-refreshing');
-                    setTimeout(() => tableContainer.classList.remove('is-refreshing'), 900);
-                }
                 const res = await fetch(`${dataUrl}?t=${Date.now()}`);
                 if (res.ok) {
                     const json = await res.json();
                     applyData(json);
+                    triggerTableRefresh();
                 }
             } catch (e) {
                 console.error(e);
