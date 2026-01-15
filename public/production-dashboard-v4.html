@@ -637,7 +637,10 @@
             }
 
             .table-container::before {
-                content: '';
+                content: none;
+            }
+
+            .table-scroll-fade {
                 position: absolute;
                 top: 0;
                 right: 0;
@@ -646,6 +649,12 @@
                 background: linear-gradient(to left, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0) 100%);
                 pointer-events: none;
                 z-index: 10;
+                opacity: 1;
+                transition: opacity 0.2s ease;
+            }
+
+            .table-scroll-fade.hidden {
+                opacity: 0;
             }
 
             .charts-area {
@@ -754,6 +763,7 @@
             </div>
 
             <div class="table-container">
+                <div class="table-scroll-fade" data-scroll-fade></div>
                 <table>
                     <thead>
                         <tr data-table-head></tr>
@@ -816,6 +826,31 @@
                 isTableRefreshing = false;
             }, maxDelay + maxDuration + 60);
         };
+
+        // Scroll fade indicator - show/hide based on scroll position
+        const initScrollFade = () => {
+            const tableContainer = document.querySelector('.table-container');
+            const scrollFade = document.querySelector('[data-scroll-fade]');
+            if (!tableContainer || !scrollFade) return;
+
+            const updateFadeVisibility = () => {
+                const { scrollLeft, scrollWidth, clientWidth } = tableContainer;
+                const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 2;
+                const hasOverflow = scrollWidth > clientWidth;
+
+                if (!hasOverflow || isAtEnd) {
+                    scrollFade.classList.add('hidden');
+                } else {
+                    scrollFade.classList.remove('hidden');
+                }
+            };
+
+            tableContainer.addEventListener('scroll', updateFadeVisibility);
+            window.addEventListener('resize', updateFadeVisibility);
+            // Initial check
+            setTimeout(updateFadeVisibility, 100);
+        };
+        initScrollFade();
 
         // Initialize ChartJS defaults for better styling
         Chart.defaults.font.family = "'Outfit', 'Inter', sans-serif";
