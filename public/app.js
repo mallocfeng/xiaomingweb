@@ -13,6 +13,8 @@ const resultCount = document.querySelector('#result-count');
 const fetchButton = document.querySelector('#fetch-button');
 const maxRecordValue = document.querySelector('#max-record-value');
 const resultsPanel = document.querySelector('.results-panel');
+const serverAddressElement = document.querySelector('#server-address');
+const databaseNameElement = document.querySelector('#database-name');
 const skinToggle = document.querySelector('#skin-toggle');
 const rangeButtons = document.querySelectorAll('.range-button');
 
@@ -198,6 +200,29 @@ function applyRangePreset(rangeKey) {
   });
 }
 
+async function loadServerConfig() {
+  if (!serverAddressElement && !databaseNameElement) {
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/config');
+    if (!response.ok) {
+      throw new Error('配置查询失败');
+    }
+
+    const config = await response.json();
+    if (serverAddressElement && config.server) {
+      serverAddressElement.textContent = config.server;
+    }
+    if (databaseNameElement && config.database) {
+      databaseNameElement.textContent = config.database;
+    }
+  } catch (error) {
+    console.error('Unable to load server config card', error);
+  }
+}
+
 function init() {
   setDefaultRangeInputs();
   buildStationCards();
@@ -234,6 +259,8 @@ function init() {
       });
     });
   }
+
+  loadServerConfig();
 }
 
 init();

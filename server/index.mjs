@@ -23,6 +23,13 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+app.get('/api/config', (req, res) => {
+  res.json({
+    server: process.env.DB_HOST || '127.0.0.1',
+    database: process.env.DB_NAME || 'TS70_246K'
+  });
+});
+
 app.post('/api/search', async (req, res) => {
   try {
     const { startTime, stopTime, rangeKey, stationFilters, sn, orderName, limit } = req.body;
