@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import fs from 'fs/promises';
 import { getConnectionPool } from './db.mjs';
 import { buildSearchQuery } from './query-builder.mjs';
 
@@ -58,6 +59,37 @@ app.post('/api/search', async (req, res) => {
   } catch (error) {
     console.error('Search request failed', error);
     res.status(500).json({ error: 'Unable to execute search' });
+  }
+});
+
+app.post('/api/production-dashboard-data', express.text({ type: '*/*', limit: '2mb' }), async (req, res) => {
+  try {
+    const rawText = typeof req.body === 'string' ? req.body.trim() : '';
+    if (!rawText) {
+      res.status(400).json({ error: 'Empty payload' });
+      return;
+    }
+
+    const shouldValidateJson = req.is('application/json') || /^[{\[]/.test(rawText);
+    if (shouldValidateJson) {
+      try {
+        JSON.parse(rawText);
+      } catch (error) {
+        res.status(400).json({ error: 'Invalid JSON payload' });
+        return;
+      }
+    }
+
+    const dataFile = path.join(publicDir, 'production-dashboard-data.json');
+    const tempFile = `${dataFile}.tmp`;
+    const content = rawText.endsWith('\n') ? rawText : `${rawText}\n`;
+    await fs.writeFile(tempFile, content, 'utf8');
+    await fs.rename(tempFile, dataFile);
+
+    res.json({ status: 'ok' });
+  } catch (error) {
+    console.error('Dashboard data update failed', error);
+    res.status(500).json({ error: 'Unable to update data file' });
   }
 });
 
