@@ -579,22 +579,110 @@
             }
 
             .sidebar {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
+                display: block;
+            }
+
+            .sidebar-card {
+                padding: 16px;
+                gap: 16px;
             }
 
             .equipment-status {
-                grid-column: 1/-1;
-                min-height: 60px;
+                min-height: 72px;
+            }
+
+            .equipment-status .decoration-img {
+                height: 45%;
+                right: 6px;
             }
 
             .main-content {
                 height: auto;
                 min-height: 0;
+                padding: 16px;
+                overflow: visible;
+                grid-template-rows: auto;
+            }
+
+            .glass-panel.main-content {
+                align-self: stretch;
+                margin-bottom: 16px;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stat-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                min-height: 0;
+            }
+
+            .stat-value {
+                margin-right: 0;
+            }
+
+            .table-container {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                position: relative;
+            }
+
+            .table-container table {
+                min-width: 760px;
+            }
+
+            .table-container::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 24px;
+                height: 100%;
+                background: linear-gradient(to left, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0) 100%);
+                pointer-events: none;
+                z-index: 10;
+            }
+
+            .charts-area {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .chart-panel {
+                height: clamp(180px, 35vw, 240px);
+                min-height: 0;
+                width: 100%;
+            }
+
+            .legend {
+                padding: 16px;
+                font-size: 0.95rem;
+                width: 100%;
             }
 
             body {
                 overflow: auto;
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stat-label {
+                font-size: 0.95rem;
+            }
+
+            .stat-value {
+                font-size: 1.2rem;
+            }
+
+            .table-container table {
+                min-width: 640px;
             }
         }
 
