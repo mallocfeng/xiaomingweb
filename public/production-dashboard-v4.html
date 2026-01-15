@@ -453,49 +453,15 @@
             background: rgba(255, 199, 102, 0.03);
         }
 
-        .table-container.is-refreshing tbody tr {
-            animation: rowFlip 0.45s ease-out forwards;
-            transform-origin: center top;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(1) {
-            animation-delay: 0.02s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(2) {
-            animation-delay: 0.05s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(3) {
-            animation-delay: 0.08s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(4) {
-            animation-delay: 0.11s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(5) {
-            animation-delay: 0.14s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(6) {
-            animation-delay: 0.17s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(7) {
-            animation-delay: 0.2s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(8) {
-            animation-delay: 0.23s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(9) {
-            animation-delay: 0.26s;
-        }
-
-        .table-container.is-refreshing tbody tr:nth-child(10) {
-            animation-delay: 0.29s;
+        .table-container.is-refreshing td {
+            animation-name: cellFlip;
+            animation-duration: var(--cell-flip-duration, 0.5s);
+            animation-delay: var(--cell-flip-delay, 0ms);
+            animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+            animation-fill-mode: both;
+            animation-iteration-count: var(--cell-flip-iterations, 1);
+            transform-origin: center center;
+            backface-visibility: hidden;
         }
 
         tr:last-child td {
@@ -632,13 +598,13 @@
             }
         }
 
-        @keyframes rowFlip {
+        @keyframes cellFlip {
             0% {
                 opacity: 0;
-                transform: rotateX(-70deg) translateY(-6px);
+                transform: rotateX(-85deg) translateY(-4px);
             }
 
-            60% {
+            55% {
                 opacity: 1;
                 transform: rotateX(0deg) translateY(0);
             }
@@ -733,15 +699,34 @@
         const triggerTableRefresh = () => {
             const tableContainer = document.querySelector('.table-container');
             if (!tableContainer || isTableRefreshing) return;
+            const cells = tableContainer.querySelectorAll('td');
+            if (!cells.length) return;
             isTableRefreshing = true;
+            const maxDelay = 360;
+            const minDuration = 360;
+            const maxDuration = 660;
+            cells.forEach((cell) => {
+                const delay = Math.floor(Math.random() * maxDelay);
+                const duration = Math.floor(minDuration + Math.random() * (maxDuration - minDuration));
+                const roll = Math.random();
+                const iterations = roll > 0.92 ? 3 : roll > 0.78 ? 2 : 1;
+                cell.style.setProperty('--cell-flip-delay', `${delay}ms`);
+                cell.style.setProperty('--cell-flip-duration', `${duration}ms`);
+                cell.style.setProperty('--cell-flip-iterations', String(iterations));
+            });
             tableContainer.classList.add('is-refreshing');
             if (tableRefreshTimer) {
                 clearTimeout(tableRefreshTimer);
             }
             tableRefreshTimer = setTimeout(() => {
                 tableContainer.classList.remove('is-refreshing');
+                cells.forEach((cell) => {
+                    cell.style.removeProperty('--cell-flip-delay');
+                    cell.style.removeProperty('--cell-flip-duration');
+                    cell.style.removeProperty('--cell-flip-iterations');
+                });
                 isTableRefreshing = false;
-            }, 900);
+            }, maxDelay + maxDuration + 60);
         };
 
         // Initialize ChartJS defaults for better styling
