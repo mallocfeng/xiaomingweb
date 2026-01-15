@@ -276,7 +276,7 @@
             grid-template-rows: auto minmax(0, 1fr) minmax(0, clamp(130px, 16vh, 210px));
             gap: 20px;
             padding: 24px;
-            background: var(--bg-glass-strong);
+            background: #ffffff;
             min-height: 0;
             overflow: hidden;
         }
@@ -415,6 +415,10 @@
             flex: 1;
             min-height: 0;
             height: var(--row-height);
+        }
+
+        tbody tr:nth-child(even) td {
+            background: rgba(255, 199, 102, 0.03);
         }
 
         .table-container.is-refreshing tbody tr {
