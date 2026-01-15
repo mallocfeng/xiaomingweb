@@ -332,7 +332,7 @@
             min-height: 0;
             --thead-base: 44px;
             --row-base: 30px;
-            --table-max-scale: 1.2;
+            --table-max-scale: 1.5;
             --table-font-scale: 1;
             --row-height: auto;
             position: relative;
@@ -530,7 +530,7 @@
             flex-direction: column;
             justify-content: center;
             gap: 8px;
-            font-size: 0.85rem;
+            font-size: 1rem;
         }
 
         .legend-item {
@@ -755,7 +755,14 @@
                 maintainAspectRatio: false,
                 cutout: '65%',
                 plugins: {
-                    legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true } }
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            usePointStyle: true,
+                            font: { size: 14, weight: '600' }
+                        }
+                    }
                 }
             }
         });
