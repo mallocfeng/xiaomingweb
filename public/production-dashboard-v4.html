@@ -301,6 +301,32 @@
             transition: all 0.2s ease;
             box-shadow: 0 2px 10px rgba(255, 120, 36, 0.08);
             min-height: 86px;
+            --stat-icon-scale: 1.3;
+        }
+
+        .stat-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform: scale(var(--stat-icon-scale));
+            transform-origin: center;
+            display: block;
         }
 
         .stat-card:hover {
@@ -780,9 +806,23 @@
 
         // DOM Builders
         const buildInfoCard = (label, value) => {
+            const labelKey = label.replace(/[:：\s]/g, '');
+            const iconMap = {
+                '区域': './assets/region.png',
+                '日期': './assets/datetime.png',
+                '班次': './assets/schedule.png',
+                '负责人': './assets/person.png'
+            };
+            const iconSrc = iconMap[labelKey];
             const div = document.createElement('div');
             div.className = 'stat-card';
-            div.innerHTML = `<span class="stat-label">${label}</span><span class="stat-value">${value}</span>`;
+            div.innerHTML = `
+                <div class="stat-left">
+                    ${iconSrc ? `<span class="stat-icon"><img src="${iconSrc}" alt=""></span>` : ''}
+                    <span class="stat-label">${label}</span>
+                </div>
+                <span class="stat-value">${value}</span>
+            `;
             return div;
         };
 
