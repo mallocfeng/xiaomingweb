@@ -64,7 +64,12 @@ app.post('/api/search', async (req, res) => {
 
 app.post('/api/production-dashboard-data', express.text({ type: '*/*', limit: '2mb' }), async (req, res) => {
   try {
-    const rawText = typeof req.body === 'string' ? req.body.trim() : '';
+    let rawText = '';
+    if (typeof req.body === 'string') {
+      rawText = req.body.trim();
+    } else if (req.body && typeof req.body === 'object') {
+      rawText = JSON.stringify(req.body, null, 2);
+    }
     if (!rawText) {
       res.status(400).json({ error: 'Empty payload' });
       return;
