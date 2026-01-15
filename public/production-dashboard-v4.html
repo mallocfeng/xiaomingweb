@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>生产订单看板 V4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            /* Refined Palette - HSL for better control */
+            --primary: #2c2e33;
+            --accent-orange: #ff7824;
+            /* More vibrant orange */
+            --accent-orange-soft: #fff3eb;
+            --accent-green: #00b368;
+            --accent-green-soft: #e3fdf0;
+
+            --bg-base: #f4f6fa;
+            --bg-glass: rgba(255, 255, 255, 0.75);
+            --bg-glass-strong: rgba(255, 255, 255, 0.9);
+            --bg-card: #ffffff;
+
+            --text-main: #1a1c23;
+            --text-muted: #6e7078;
+            --text-light: #9fa2b0;
+
+            --border-light: rgba(255, 255, 255, 0.6);
+            --border-subtle: rgba(0, 0, 0, 0.04);
+
+            --shadow-soft: 0 4px 20px -2px rgba(18, 22, 33, 0.06);
+            --shadow-hover: 0 10px 30px -4px rgba(18, 22, 33, 0.1);
+
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Outfit', 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            background-image: url('./assets/bg-texture.png');
+            background-size: cover;
+            background-attachment: fixed;
+            color: var(--text-main);
+            padding: clamp(16px, 2vw, 32px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Prevent body scroll if content fits */
+        }
+
+        /* Layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            grid-template-rows: 1fr;
+            gap: 24px;
+            height: calc(100vh - 2 * clamp(16px, 2vw, 32px));
+            max-width: 1920px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Glassmorphism Panel Base */
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            backdrop-filter: none;
+            min-height: 0;
+        }
+
+        .sidebar-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 24px;
+            background: var(--bg-glass-strong);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            min-height: 0;
+        }
+
+        .logo-area {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #d41920 0%, #b01216 100%);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            min-height: 80px;
+            border-radius: var(--radius-md);
+        }
+
+        .logo-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('./assets/header-bg.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3;
+            mix-blend-mode: overlay;
+        }
+
+        .logo-text {
+            position: relative;
+            z-index: 1;
+            font-style: italic;
+        }
+
+        .status-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background: var(--accent-orange-soft);
+            border: 1px solid rgba(255, 120, 36, 0.16);
+            border-radius: var(--radius-md);
+            padding: 18px 18px 12px;
+        }
+
+        .card-header {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 16px;
+            background: var(--accent-orange);
+            border-radius: 2px;
+        }
+
+        .order-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+            min-height: 0;
+            background: transparent;
+            border: none;
+            padding: 0 4px 0 0;
+        }
+
+        /* Scrollbar Styling */
+        .order-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .order-list::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .order-item {
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 120, 36, 0.16);
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .order-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .progress-track {
+            height: 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-orange);
+            border-radius: 999px;
+            width: 0;
+            transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .progress.blue .progress-fill {
+            background: #3b82f6;
+        }
+
+        .progress.gray .progress-fill {
+            background: #9ca3af;
+        }
+
+        .equipment-status {
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            background: var(--accent-green-soft) !important;
+            border: 1px solid rgba(0, 179, 104, 0.1);
+            position: relative;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            padding-right: 24px;
+        }
+
+        .equipment-status .decoration-img {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 55%;
+            width: auto;
+            opacity: 0.9;
+            mask-image: linear-gradient(to left, black 60%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to left, black 60%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .equipment-status .equipment-text {
+            transform: translateX(-14px);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) minmax(0, clamp(130px, 16vh, 210px));
+            gap: 20px;
+            padding: 24px;
+            background: var(--bg-glass-strong);
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Top Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--accent-orange-soft);
+            border: 1px solid rgba(255, 120, 36, 0.18);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(255, 120, 36, 0.08);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(255, 120, 36, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+        }
+
+        /* Data Table */
+        .table-container {
+            flex: 1;
+            background: white;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            min-height: 0;
+            --thead-base: 44px;
+            --row-base: 30px;
+            --table-max-scale: 1;
+            --table-font-scale: 1;
+            --row-height: auto;
+            position: relative;
+        }
+
+        .table-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(180deg,
+                    rgba(255, 120, 36, 0.05) 0,
+                    rgba(255, 120, 36, 0.05) 12px,
+                    transparent 12px,
+                    transparent 24px);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-100%);
+        }
+
+        .table-container.is-refreshing::after {
+            animation: flipScan 0.9s ease-out;
+        }
+
+        table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        thead {
+            flex-shrink: 0;
+        }
+
+        tbody {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        thead tr,
+        tbody tr {
+            display: flex;
+            width: 100%;
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: calc(clamp(11px, 0.75vw, 13px) * var(--table-font-scale));
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            background: #f8f9fc;
+            border-bottom: 2px solid var(--accent-orange);
+            min-height: calc(var(--thead-base) * var(--table-font-scale));
+        }
+
+        td {
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            font-size: calc(clamp(11px, 0.8vw, 14px) * var(--table-font-scale));
+            word-break: break-word;
+        }
+
+        th,
+        td {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35em 0.5em;
+            min-width: 0;
+        }
+
+        tbody tr {
+            flex: 1;
+            min-height: 0;
+            height: var(--row-height);
+        }
+
+        .table-container.is-refreshing tbody tr {
+            animation: rowFlip 0.45s ease-out forwards;
+            transform-origin: center top;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(1) {
+            animation-delay: 0.02s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(2) {
+            animation-delay: 0.05s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(3) {
+            animation-delay: 0.08s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(4) {
+            animation-delay: 0.11s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(5) {
+            animation-delay: 0.14s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(6) {
+            animation-delay: 0.17s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(7) {
+            animation-delay: 0.2s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(8) {
+            animation-delay: 0.23s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(9) {
+            animation-delay: 0.26s;
+        }
+
+        .table-container.is-refreshing tbody tr:nth-child(10) {
+            animation-delay: 0.29s;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cell-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            line-height: 1.2;
+        }
+
+        .cell-stack small {
+            font-size: 0.7em;
+            color: var(--text-muted);
+        }
+
+        /* Highlight Column */
+        td:nth-child(5) {
+            font-weight: 600;
+            color: var(--accent-orange);
+        }
+
+        .highlight {
+            font-weight: 600;
+            color: var(--accent-orange);
+        }
+
+        td:first-child {
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        /* Charts Area */
+        .charts-area {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 240px;
+            gap: 20px;
+            min-height: 0;
+            align-items: stretch;
+        }
+
+        .chart-panel {
+            background: #fff7f0;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            padding: 16px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .chart-panel canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .legend-item {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .legend-item:last-child {
+            border: none;
+            padding: 0;
+        }
+
+        .legend-key {
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .legend-val {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 260px 1fr;
+                gap: 16px;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                height: auto;
+                overflow-y: auto;
+            }
+
+            .sidebar {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .equipment-status {
+                grid-column: 1/-1;
+                min-height: 60px;
+            }
+
+            .main-content {
+                height: auto;
+                min-height: 0;
+            }
+
+            body {
+                overflow: auto;
+            }
+        }
+
+        @keyframes rowFlip {
+            0% {
+                opacity: 0;
+                transform: rotateX(-70deg) translateY(-6px);
+            }
+
+            60% {
+                opacity: 1;
+                transform: rotateX(0deg) translateY(0);
+            }
+
+            100% {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes flipScan {
+            0% {
+                opacity: 0.7;
+                transform: translateY(-100%);
+            }
+
+            60% {
+                opacity: 0.2;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(100%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-card">
+                <div class="logo-area">
+                    <span class="logo-text">Danfoss</span>
+                </div>
+
+                <div class="status-card">
+                    <div class="card-header">订单状态</div>
+                    <div class="order-list" data-order-status>
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="equipment-status" data-equipment-status>
+                    <span class="equipment-text" data-equipment-text style="position: relative; z-index: 2;">设备正常运行</span>
+                    <img src="./assets/smt-device.png" class="decoration-img" alt="" />
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="glass-panel main-content">
+            <div class="stats-bar" data-top-bar>
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr data-table-head></tr>
+                    </thead>
+                    <tbody data-table-body></tbody>
+                </table>
+            </div>
+
+            <div class="charts-area">
+                <div class="chart-panel">
+                    <canvas id="barChart"></canvas>
+                </div>
+                <div class="chart-panel">
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div class="chart-panel legend" data-legend>
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script type="module">
+        import { initTableSizing } from './production-dashboard-table.mjs';
+
+        const tableSizer = initTableSizing(document.querySelector('.table-container'));
+
+        // Initialize ChartJS defaults for better styling
+        Chart.defaults.font.family = "'Outfit', 'Inter', sans-serif";
+        Chart.defaults.color = '#6e7078';
+
+        // --- Data Handling ---
+        const dataUrl = './production-dashboard-data.json';
+        const refreshInterval = 10000;
+
+        // Bar Chart
+        const barCtx = document.getElementById('barChart');
+        const barGradient = barCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        barGradient.addColorStop(0, '#ff7824');
+        barGradient.addColorStop(1, '#ffb380');
+
+        const barChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Output',
+                    data: [],
+                    backgroundColor: barGradient,
+                    borderRadius: 6,
+                    barThickness: 24
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.03)' },
+                        border: { display: false }
+                    },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart');
+        const pieChart = new Chart(pieCtx, {
+            type: 'doughnut', /* Modern look */
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: ['#00b368', '#ffb024', '#ff7824'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true } }
+                }
+            }
+        });
+
+        // DOM Builders
+        const buildInfoCard = (label, value) => {
+            const div = document.createElement('div');
+            div.className = 'stat-card';
+            div.innerHTML = `<span class="stat-label">${label}</span><span class="stat-value">${value}</span>`;
+            return div;
+        };
+
+        const buildOrderItem = (item) => {
+            const div = document.createElement('div');
+            div.className = 'order-item';
+            div.innerHTML = `
+           <div class="order-name">${item.label}</div>
+           <div class="progress-track">
+              <div class="progress-fill" style="width: ${item.progress}%"></div>
+           </div>
+        `;
+            return div;
+        };
+
+        const buildCell = (value) => {
+            if (value && typeof value === 'object') {
+                const lines = Array.isArray(value.lines) ? value.lines : [];
+                const extra = value.extra ? `<small>${value.extra}</small>` : '';
+                const lineHtml = lines.map((line) => `<span>${line}</span>`).join('');
+                return `<div class="cell-stack">${lineHtml}${extra}</div>`;
+            }
+            return value ?? '';
+        };
+
+        // Use flex-table layout with the sizing helper to keep rows filling the container.
+
+        const updateTable = (tableData) => {
+            const headTr = document.querySelector('[data-table-head]');
+            const bodyTbody = document.querySelector('[data-table-body]');
+            if (!headTr || !bodyTbody) return;
+
+            const formatColumnHeader = (text) => {
+                return text
+                    .replace(/\s*-\s*/g, '<br>')
+                    .replace(/（/g, '<br>（')
+                    .replace(/\(/g, '<br>(');
+            };
+
+            // Headers
+            headTr.innerHTML = '';
+            tableData.columns.forEach(col => {
+                const th = document.createElement('th');
+                th.innerHTML = formatColumnHeader(col);
+                headTr.appendChild(th);
+            });
+
+            // Rows
+            bodyTbody.innerHTML = '';
+            tableData.rows.forEach((row) => {
+                const tr = document.createElement('tr');
+                row.forEach((cell, cIndex) => {
+                    const td = document.createElement('td');
+                    if (cIndex === 4) {
+                        td.classList.add('highlight');
+                    }
+                    td.innerHTML = buildCell(cell);
+                    tr.appendChild(td);
+                });
+                bodyTbody.appendChild(tr);
+            });
+        };
+
+        const updateLegend = (items) => {
+            const el = document.querySelector('[data-legend]');
+            if (!el) return;
+            el.innerHTML = '';
+            items.forEach(item => {
+                el.innerHTML += `<div class="legend-item"><span class="legend-key">${item.left}</span><span class="legend-val">${item.right}</span></div>`;
+            });
+        };
+
+        const applyData = (data) => {
+            // Top Bar
+            const topBar = document.querySelector('[data-top-bar]');
+            topBar.innerHTML = '';
+            data.topInfo.forEach(d => topBar.appendChild(buildInfoCard(d.label, d.value)));
+
+            // Order Status
+            const orderStatus = document.querySelector('[data-order-status]');
+            orderStatus.innerHTML = '';
+            data.orderStatus.forEach(d => orderStatus.appendChild(buildOrderItem(d)));
+
+            // Equipment
+            const eq = document.querySelector('[data-equipment-status]');
+            if (eq) {
+                const eqText = eq.querySelector('[data-equipment-text]');
+                if (eqText) {
+                    eqText.textContent = data.equipmentStatus;
+                } else {
+                    eq.textContent = data.equipmentStatus;
+                }
+            }
+
+            // Table
+            updateTable(data.table);
+            tableSizer.update();
+
+            // Charts
+            if (data.barChart) {
+                barChart.data.labels = data.barChart.labels;
+                barChart.data.datasets[0].data = data.barChart.values;
+                barChart.update();
+            }
+            if (data.pieChart) {
+                pieChart.data.labels = data.pieChart.labels;
+                pieChart.data.datasets[0].data = data.pieChart.values;
+                pieChart.update();
+            }
+
+            updateLegend(data.legend);
+        };
+
+        const loadData = async () => {
+            try {
+                const tableContainer = document.querySelector('.table-container');
+                if (tableContainer) {
+                    tableContainer.classList.add('is-refreshing');
+                    setTimeout(() => tableContainer.classList.remove('is-refreshing'), 900);
+                }
+                const res = await fetch(`${dataUrl}?t=${Date.now()}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    applyData(json);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        loadData();
+        setInterval(loadData, refreshInterval);
+
+    </script>
+</body>
+
+</html>
