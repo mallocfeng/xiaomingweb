@@ -49,8 +49,9 @@
             margin: 0;
             min-height: 100vh;
             font-family: 'Outfit', 'Inter', sans-serif;
-            background-color: var(--bg-base);
-            background-image: url('./assets/bg-texture.png');
+            background-color: #ffb07c;
+            background-image: url('./assets/bg-texture-warm.png');
+            background-blend-mode: multiply;
             background-size: cover;
             background-attachment: fixed;
             color: var(--text-main);
@@ -64,12 +65,12 @@
         /* Layout */
         .dashboard-container {
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 320px minmax(0, 1fr);
             grid-template-rows: 1fr;
             gap: 24px;
             height: calc(100vh - 2 * clamp(16px, 2vw, 32px));
-            max-width: 1920px;
-            margin: 0 auto;
+            max-width: none;
+            margin: 0;
             width: 100%;
         }
 
@@ -331,7 +332,7 @@
             min-height: 0;
             --thead-base: 44px;
             --row-base: 30px;
-            --table-max-scale: 1;
+            --table-max-scale: 1.2;
             --table-font-scale: 1;
             --row-height: auto;
             position: relative;
@@ -553,7 +554,7 @@
         /* Responsive */
         @media (max-width: 1200px) {
             .dashboard-container {
-                grid-template-columns: 260px 1fr;
+                grid-template-columns: 300px minmax(0, 1fr);
                 gap: 16px;
             }
 
@@ -644,7 +645,8 @@
                 </div>
 
                 <div class="equipment-status" data-equipment-status>
-                    <span class="equipment-text" data-equipment-text style="position: relative; z-index: 2;">设备正常运行</span>
+                    <span class="equipment-text" data-equipment-text
+                        style="position: relative; z-index: 2;">设备正常运行</span>
                     <img src="./assets/smt-device.png" class="decoration-img" alt="" />
                 </div>
             </div>
@@ -708,7 +710,9 @@
                     data: [],
                     backgroundColor: barGradient,
                     borderRadius: 6,
-                    barThickness: 24
+                    maxBarThickness: 30,
+                    categoryPercentage: 0.8,
+                    barPercentage: 0.9
                 }]
             },
             options: {
