@@ -873,6 +873,9 @@
         // --- Data Handling ---
         const dataUrl = './production-dashboard-data.json';
         const refreshInterval = 10000;
+        const requestTimeout = 6000;
+        let liveSource = null;
+        let pollTimer = null;
 
         // Bar Chart
         const barCtx = document.getElementById('barChart');
@@ -1075,20 +1078,68 @@
         };
 
         const loadData = async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), requestTimeout);
             try {
-                const res = await fetch(`${dataUrl}?t=${Date.now()}`);
-                if (res.ok) {
-                    const json = await res.json();
-                    applyData(json);
-                    triggerTableRefresh();
+                const res = await fetch(`${dataUrl}?t=${Date.now()}`, {
+                    cache: 'no-store',
+                    signal: controller.signal
+                });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
                 }
+                const contentType = res.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    const text = await res.text();
+                    throw new Error(`Unexpected response (${contentType}): ${text.slice(0, 120)}`);
+                }
+                const json = await res.json();
+                applyData(json);
+                triggerTableRefresh();
             } catch (e) {
-                console.error(e);
+                console.error('Dashboard data load failed', e);
+            } finally {
+                clearTimeout(timeoutId);
             }
         };
 
+        const startPolling = () => {
+            if (pollTimer) return;
+            pollTimer = setInterval(loadData, refreshInterval);
+        };
+
+        const stopPolling = () => {
+            if (!pollTimer) return;
+            clearInterval(pollTimer);
+            pollTimer = null;
+        };
+
+        const initLiveUpdates = () => {
+            if (!('EventSource' in window)) {
+                startPolling();
+                return;
+            }
+
+            if (liveSource) {
+                liveSource.close();
+            }
+            liveSource = new EventSource('/api/production-dashboard-data/stream');
+            liveSource.addEventListener('data-update', loadData);
+            liveSource.onopen = () => {
+                stopPolling();
+            };
+            liveSource.onerror = () => {
+                if (liveSource) {
+                    liveSource.close();
+                    liveSource = null;
+                }
+                startPolling();
+                setTimeout(initLiveUpdates, 5000);
+            };
+        };
+
         loadData();
-        setInterval(loadData, refreshInterval);
+        initLiveUpdates();
 
     </script>
 </body>
