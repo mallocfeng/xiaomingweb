@@ -1086,12 +1086,14 @@
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status}`);
                 }
-                const contentType = res.headers.get('content-type') || '';
-                if (!contentType.includes('application/json')) {
-                    const text = await res.text();
-                    throw new Error(`Unexpected response (${contentType}): ${text.slice(0, 120)}`);
+                const text = await res.text();
+                let json;
+                try {
+                    json = JSON.parse(text);
+                } catch (error) {
+                    const contentType = res.headers.get('content-type') || 'unknown';
+                    throw new Error(`Invalid JSON (${contentType}): ${text.slice(0, 120)}`);
                 }
-                const json = await res.json();
                 applyData(json);
                 triggerTableRefresh();
             } catch (e) {
@@ -1099,6 +1101,18 @@
             } finally {
                 clearTimeout(timeoutId);
             }
+        };
+
+        const retryLoadData = (attempts = 3, delayMs = 1200) => {
+            let attempt = 0;
+            const run = async () => {
+                await loadData();
+                attempt += 1;
+                if (attempt < attempts) {
+                    setTimeout(run, delayMs);
+                }
+            };
+            run();
         };
 
         const initLiveUpdates = () => {
@@ -1120,7 +1134,7 @@
             };
         };
 
-        loadData();
+        retryLoadData();
         initLiveUpdates();
 
     </script>

@@ -17,6 +17,7 @@ app.use(express.json({ limit: '1mb' }));
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 const dashboardDataFile = path.join(publicDir, 'production-dashboard-data.json');
+const dashboardDataFileName = path.basename(dashboardDataFile);
 const sseClients = new Set();
 let dataWatchTimer = null;
 
@@ -124,7 +125,10 @@ app.get('/api/production-dashboard-data/stream', (req, res) => {
 
 const watchDashboardData = () => {
   try {
-    fs.watch(dashboardDataFile, { persistent: false }, () => {
+    fs.watch(publicDir, { persistent: false }, (eventType, filename) => {
+      if (!filename || filename !== dashboardDataFileName) {
+        return;
+      }
       if (dataWatchTimer) {
         clearTimeout(dataWatchTimer);
       }
