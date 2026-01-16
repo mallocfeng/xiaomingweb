@@ -2,8 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import fs from 'fs';
-import fsPromises from 'fs/promises';
+import fs from 'fs/promises';
 import { getConnectionPool } from './db.mjs';
 import { buildSearchQuery } from './query-builder.mjs';
 
@@ -16,17 +15,6 @@ const app = express();
 app.use(express.json({ limit: '1mb' }));
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
-const dashboardDataFile = path.join(publicDir, 'production-dashboard-data.json');
-const dashboardClients = new Set();
-
-const notifyDashboardUpdate = () => {
-  const payload = `event: data-update\ndata: ${Date.now()}\n\n`;
-  dashboardClients.forEach((res) => res.write(payload));
-};
-
-fs.watch(dashboardDataFile, { persistent: false }, () => {
-  notifyDashboardUpdate();
-});
 
 app.get('/api/status', (req, res) => {
   res.json({
@@ -100,29 +88,14 @@ app.post('/api/production-dashboard-data', express.text({ type: '*/*', limit: '2
     const dataFile = path.join(publicDir, 'production-dashboard-data.json');
     const tempFile = `${dataFile}.tmp`;
     const content = rawText.endsWith('\n') ? rawText : `${rawText}\n`;
-    await fsPromises.writeFile(tempFile, content, 'utf8');
-    await fsPromises.rename(tempFile, dataFile);
-    notifyDashboardUpdate();
+    await fs.writeFile(tempFile, content, 'utf8');
+    await fs.rename(tempFile, dataFile);
 
     res.json({ status: 'ok' });
   } catch (error) {
     console.error('Dashboard data update failed', error);
     res.status(500).json({ error: 'Unable to update data file' });
   }
-});
-
-app.get('/api/production-dashboard-data/stream', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-
-  res.write('retry: 3000\n\n');
-  dashboardClients.add(res);
-
-  req.on('close', () => {
-    dashboardClients.delete(res);
-  });
 });
 
 app.use((req, res) => {

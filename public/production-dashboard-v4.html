@@ -873,7 +873,6 @@
         // --- Data Handling ---
         const dataUrl = './production-dashboard-data.json';
         const refreshInterval = 10000;
-        let liveSource = null;
 
         // Bar Chart
         const barCtx = document.getElementById('barChart');
@@ -1088,28 +1087,8 @@
             }
         };
 
-        const initLiveUpdates = () => {
-            if (!('EventSource' in window)) {
-                setInterval(loadData, refreshInterval);
-                return;
-            }
-
-            if (liveSource) {
-                liveSource.close();
-            }
-            liveSource = new EventSource('/api/production-dashboard-data/stream');
-            liveSource.addEventListener('data-update', () => {
-                loadData();
-            });
-            liveSource.onerror = () => {
-                liveSource.close();
-                liveSource = null;
-                setTimeout(initLiveUpdates, 5000);
-            };
-        };
-
         loadData();
-        initLiveUpdates();
+        setInterval(loadData, refreshInterval);
 
     </script>
 </body>
