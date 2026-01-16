@@ -284,7 +284,7 @@
         /* Top Stats Bar */
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
 
@@ -563,6 +563,22 @@
         }
 
         /* Responsive */
+        @media (max-width: 1350px) {
+            .table-container {
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table-container table {
+                min-width: 860px;
+            }
+
+            .table-scroll-hint {
+                display: inline-flex;
+            }
+        }
+
         @media (max-width: 1200px) {
             .dashboard-container {
                 grid-template-columns: 300px minmax(0, 1fr);
