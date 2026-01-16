@@ -872,10 +872,8 @@
 
         // --- Data Handling ---
         const dataUrl = './production-dashboard-data.json';
-        const refreshInterval = 10000;
         const requestTimeout = 6000;
         let liveSource = null;
-        let pollTimer = null;
 
         // Bar Chart
         const barCtx = document.getElementById('barChart');
@@ -1103,22 +1101,8 @@
             }
         };
 
-        const startPolling = () => {
-            if (pollTimer) return;
-            pollTimer = setInterval(loadData, refreshInterval);
-        };
-
-        const stopPolling = () => {
-            if (!pollTimer) return;
-            clearInterval(pollTimer);
-            pollTimer = null;
-        };
-
         const initLiveUpdates = () => {
-            if (!('EventSource' in window)) {
-                startPolling();
-                return;
-            }
+            if (!('EventSource' in window)) return;
 
             if (liveSource) {
                 liveSource.close();
@@ -1126,14 +1110,12 @@
             liveSource = new EventSource('/api/production-dashboard-data/stream');
             liveSource.addEventListener('data-update', loadData);
             liveSource.onopen = () => {
-                stopPolling();
             };
             liveSource.onerror = () => {
                 if (liveSource) {
                     liveSource.close();
                     liveSource = null;
                 }
-                startPolling();
                 setTimeout(initLiveUpdates, 5000);
             };
         };

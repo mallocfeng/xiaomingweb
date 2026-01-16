@@ -2,7 +2,8 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import fs from 'fs/promises';
+import fsPromises from 'fs/promises';
+import fs from 'fs';
 import { getConnectionPool } from './db.mjs';
 import { buildSearchQuery } from './query-builder.mjs';
 
@@ -15,6 +16,16 @@ const app = express();
 app.use(express.json({ limit: '1mb' }));
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
+const dashboardDataFile = path.join(publicDir, 'production-dashboard-data.json');
+const sseClients = new Set();
+let dataWatchTimer = null;
+
+const broadcastDataUpdate = () => {
+  const payload = `event: data-update\ndata: ${Date.now()}\n\n`;
+  sseClients.forEach((res) => {
+    res.write(payload);
+  });
+};
 
 app.get('/api/status', (req, res) => {
   res.json({
@@ -85,12 +96,12 @@ app.post('/api/production-dashboard-data', express.text({ type: '*/*', limit: '2
       }
     }
 
-    const dataFile = path.join(publicDir, 'production-dashboard-data.json');
-    const tempFile = `${dataFile}.tmp`;
+    const tempFile = `${dashboardDataFile}.tmp`;
     const content = rawText.endsWith('\n') ? rawText : `${rawText}\n`;
-    await fs.writeFile(tempFile, content, 'utf8');
-    await fs.rename(tempFile, dataFile);
+    await fsPromises.writeFile(tempFile, content, 'utf8');
+    await fsPromises.rename(tempFile, dashboardDataFile);
 
+    broadcastDataUpdate();
     res.json({ status: 'ok' });
   } catch (error) {
     console.error('Dashboard data update failed', error);
@@ -98,12 +109,41 @@ app.post('/api/production-dashboard-data', express.text({ type: '*/*', limit: '2
   }
 });
 
+app.get('/api/production-dashboard-data/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  res.write('retry: 5000\n\n');
+
+  sseClients.add(res);
+  req.on('close', () => {
+    sseClients.delete(res);
+  });
+});
+
+const watchDashboardData = () => {
+  try {
+    fs.watch(dashboardDataFile, { persistent: false }, () => {
+      if (dataWatchTimer) {
+        clearTimeout(dataWatchTimer);
+      }
+      dataWatchTimer = setTimeout(() => {
+        broadcastDataUpdate();
+      }, 120);
+    });
+  } catch (error) {
+    console.error('Dashboard data watch failed', error);
+  }
+};
+
 app.use((req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 const PORT = Number(process.env.PORT || 3000);
 if (process.argv[1] === __filename) {
+  watchDashboardData();
   app.listen(PORT, () => {
     console.log(`TS70 explorer listening on port ${PORT}`);
   });
