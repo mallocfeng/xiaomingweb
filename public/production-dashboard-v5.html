@@ -963,9 +963,14 @@
 
         const triggerTableRefresh = () => {
             const tableContainer = document.querySelector('.table-container');
-            if (!tableContainer || isTableRefreshing) return;
+            if (!tableContainer) return;
             const cells = tableContainer.querySelectorAll('td');
             if (!cells.length) return;
+            if (tableRefreshTimer) {
+                clearTimeout(tableRefreshTimer);
+            }
+            tableContainer.classList.remove('is-refreshing');
+            void tableContainer.offsetWidth;
             isTableRefreshing = true;
             const maxDelay = 360;
             const minDuration = 360;
@@ -980,9 +985,6 @@
                 cell.style.setProperty('--cell-flip-iterations', String(iterations));
             });
             tableContainer.classList.add('is-refreshing');
-            if (tableRefreshTimer) {
-                clearTimeout(tableRefreshTimer);
-            }
             tableRefreshTimer = setTimeout(() => {
                 tableContainer.classList.remove('is-refreshing');
                 cells.forEach((cell) => {
@@ -1254,7 +1256,7 @@
             }
         };
 
-        const retryLoadData = (attempts = 3, delayMs = 1200) => {
+        const retryLoadData = (attempts = 1, delayMs = 1200) => {
             let attempt = 0;
             const run = async () => {
                 await loadData();
@@ -1285,7 +1287,7 @@
             };
         };
 
-        retryLoadData();
+        retryLoadData(1);
         initLiveUpdates();
 
     </script>
