@@ -400,12 +400,14 @@
 
         table {
             width: 100%;
-            height: 100%;
+            height: auto;
             border-collapse: collapse;
             table-layout: fixed;
             display: flex;
             flex-direction: column;
             text-align: center;
+            flex: 1 1 auto;
+            min-height: 0;
         }
 
         thead {
@@ -520,10 +522,16 @@
                     rgba(20, 24, 30, 0.9) 100%);
             --flip-border: rgba(255, 255, 255, 0.12);
             --flip-divider: rgba(255, 255, 255, 0.2);
+            padding: 0.28em 0.36em;
         }
 
         .flip-tile--time .flip-text {
-            font-size: 0.8em;
+            font-size: clamp(0.5em, 1.4vw, 0.96em);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: clip;
+            display: block;
+            letter-spacing: 0;
         }
 
         .flip-tile--eff-good {
@@ -560,7 +568,7 @@
 
         .flip-tile--eff-good .flip-text,
         .flip-tile--eff-bad .flip-text {
-            font-size: 0.8em;
+            font-size: clamp(0.5em, 1.4vw, 0.96em);
         }
 
         .flip-tile--stack {
@@ -707,6 +715,10 @@
 
             .table-scroll-hint {
                 display: inline-flex;
+            }
+
+            .flip-tile--time .flip-text {
+                font-size: clamp(0.46em, 1vw, 0.78em);
             }
         }
 
@@ -955,7 +967,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script type="module">
-        import { initTableSizing } from './production-dashboard-table.mjs';
+        import { computeFittedFontSize, initTableSizing } from './production-dashboard-table.mjs';
 
         const tableSizer = initTableSizing(document.querySelector('.table-container'));
         let tableRefreshTimer = null;
@@ -995,6 +1007,41 @@
                 isTableRefreshing = false;
             }, maxDelay + maxDuration + 60);
         };
+
+        const fitTimeTiles = () => {
+            const tiles = document.querySelectorAll('.flip-tile--time');
+            tiles.forEach((tile) => {
+                const text = tile.querySelector('.flip-text');
+                if (!text) return;
+                text.style.fontSize = '';
+                const textStyle = getComputedStyle(text);
+                const baseSize = Number.parseFloat(textStyle.fontSize);
+                if (!Number.isFinite(baseSize) || baseSize <= 0) return;
+                const tileStyle = getComputedStyle(tile);
+                const paddingLeft = Number.parseFloat(tileStyle.paddingLeft) || 0;
+                const paddingRight = Number.parseFloat(tileStyle.paddingRight) || 0;
+                const availableWidth = Math.max(0, tile.clientWidth - paddingLeft - paddingRight);
+                const textWidth = text.scrollWidth;
+                const fitted = computeFittedFontSize({
+                    availableWidth,
+                    textWidth,
+                    baseSize,
+                    minScale: 0.72
+                });
+                if (Number.isFinite(fitted) && fitted < baseSize) {
+                    text.style.fontSize = `${fitted}px`;
+                }
+            });
+        };
+
+        const scheduleTimeFit = () => {
+            requestAnimationFrame(fitTimeTiles);
+        };
+
+        window.addEventListener('resize', scheduleTimeFit);
+        if (document.fonts?.ready) {
+            document.fonts.ready.then(scheduleTimeFit).catch(() => {});
+        }
 
         // Initialize ChartJS defaults for better styling
         Chart.defaults.font.family = "'Outfit', 'Inter', sans-serif";
@@ -1212,6 +1259,7 @@
             // Table
             updateTable(data.table);
             tableSizer.update();
+            scheduleTimeFit();
 
             // Charts
             if (data.barChart) {

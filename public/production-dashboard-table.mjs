@@ -9,6 +9,24 @@ const parseNumber = (value, fallback) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+export function computeFittedFontSize({ availableWidth, textWidth, baseSize, minScale = 0.7 }) {
+  if (!Number.isFinite(availableWidth) || !Number.isFinite(textWidth) || !Number.isFinite(baseSize)) {
+    return baseSize;
+  }
+
+  if (availableWidth <= 0 || textWidth <= 0 || baseSize <= 0) {
+    return baseSize;
+  }
+
+  if (textWidth <= availableWidth) {
+    return baseSize;
+  }
+
+  const ratio = availableWidth / textWidth;
+  const scale = Math.max(minScale, ratio);
+  return baseSize * scale;
+}
+
 export function computeTableMetrics({ availableHeight, rowCount, headBase, rowBase, maxScale = 1 }) {
   if (!Number.isFinite(availableHeight) || availableHeight <= 0 || rowCount <= 0) {
     return {
@@ -53,10 +71,20 @@ export function initTableSizing(tableWrap, options = {}) {
     const computed = getComputedStyleFn ? getComputedStyleFn(tableWrap) : null;
     const paddingTop = parseNumber(computed?.paddingTop, 0);
     const paddingBottom = parseNumber(computed?.paddingBottom, 0);
-    const availableHeight = Math.max(0, tableWrap.clientHeight - paddingTop - paddingBottom);
+    let availableHeight = Math.max(0, tableWrap.clientHeight - paddingTop - paddingBottom);
     const rowCount = tableWrap.querySelectorAll ? tableWrap.querySelectorAll('tbody tr').length : 0;
 
     tableWrap.style?.setProperty('--row-count', String(rowCount));
+
+    if (tableWrap.querySelector) {
+      const hint = tableWrap.querySelector('.table-scroll-hint');
+      const hintStyle = hint && getComputedStyleFn ? getComputedStyleFn(hint) : null;
+      const hintPosition = hintStyle?.position;
+      const shouldSubtractHint = hint && (!hintPosition || (hintPosition !== 'absolute' && hintPosition !== 'fixed'));
+      if (shouldSubtractHint && Number.isFinite(hint.offsetHeight)) {
+        availableHeight = Math.max(0, availableHeight - hint.offsetHeight);
+      }
+    }
 
     const headBase = parseNumber(computed?.getPropertyValue?.('--thead-base'), options.headBase ?? DEFAULTS.headBase);
     const rowBase = parseNumber(computed?.getPropertyValue?.('--row-base'), options.rowBase ?? DEFAULTS.rowBase);
@@ -74,7 +102,19 @@ export function initTableSizing(tableWrap, options = {}) {
     });
 
     tableWrap.style?.setProperty('--table-font-scale', Number.isFinite(fontScale) ? fontScale.toFixed(3) : '1');
-    tableWrap.style?.setProperty('--row-height', Number.isFinite(rowHeight) ? `${rowHeight.toFixed(2)}px` : '0px');
+    let resolvedRowHeight = rowHeight;
+    if (tableWrap.querySelector) {
+      const thead = tableWrap.querySelector('thead');
+      const measuredHeadHeight = thead?.getBoundingClientRect?.().height;
+      if (Number.isFinite(measuredHeadHeight) && measuredHeadHeight > headBase * fontScale && rowCount > 0) {
+        resolvedRowHeight = Math.max(0, (availableHeight - measuredHeadHeight) / rowCount);
+      }
+    }
+
+    tableWrap.style?.setProperty(
+      '--row-height',
+      Number.isFinite(resolvedRowHeight) ? `${resolvedRowHeight.toFixed(2)}px` : '0px'
+    );
   };
 
   update();
