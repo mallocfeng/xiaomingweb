@@ -266,6 +266,7 @@
             mask-image: linear-gradient(to left, black 60%, transparent 100%);
             -webkit-mask-image: linear-gradient(to left, black 60%, transparent 100%);
             pointer-events: none;
+            filter: drop-shadow(0 2px 2px rgba(0, 80, 45, 0.3));
         }
 
         .equipment-status .equipment-text {
@@ -1092,31 +1093,70 @@
             }
         });
 
-        // Pie Chart
+        // Pie Chart - 空心饼图
         const pieCtx = document.getElementById('pieChart');
+        
         const pieChart = new Chart(pieCtx, {
-            type: 'doughnut', /* Modern look */
+            type: 'doughnut',
             data: {
                 labels: [],
                 datasets: [{
                     data: [],
-                    backgroundColor: ['#00b368', '#ffb024', '#ff7824'],
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    backgroundColor: [
+                        '#00b368',   // 达成 - 绿色
+                        '#ffb024',   // 延误 - 黄色
+                        '#ff7824'    // 异常 - 橙色
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '65%',
+                cutout: '40%',
+                animation: {
+                    animateRotate: true,
+                    duration: 800,
+                    easing: 'easeOutQuart'
+                },
                 plugins: {
                     legend: {
                         position: 'right',
                         labels: {
                             boxWidth: 12,
+                            boxHeight: 12,
                             usePointStyle: true,
-                            font: { size: 14, weight: '600' }
+                            pointStyle: 'circle',
+                            padding: 14,
+                            font: { size: 14, weight: '600' },
+                            generateLabels: (chart) => {
+                                const data = chart.data;
+                                const dataset = data.datasets[0];
+                                const total = dataset.data.reduce((a, b) => a + b, 0);
+                                return data.labels.map((label, i) => {
+                                    const value = dataset.data[i];
+                                    const percent = total ? Math.round((value / total) * 100) : 0;
+                                    return {
+                                        text: `${label}  ${percent}%`,
+                                        fillStyle: dataset.backgroundColor[i],
+                                        strokeStyle: 'transparent',
+                                        lineWidth: 0,
+                                        hidden: false,
+                                        index: i
+                                    };
+                                });
+                            }
                         }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 35, 45, 0.9)',
+                        titleFont: { size: 13, weight: '600' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 6,
+                        displayColors: true
                     }
                 }
             }
