@@ -580,13 +580,13 @@
         }
 
         .flip-text {
-            display: block;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2; /* stylelint-disable-line property-no-vendor-prefix */
+            line-clamp: 2;
+            overflow: hidden;
             text-align: center;
             width: 100%;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
         }
 
         .flip-tile .cell-stack {
