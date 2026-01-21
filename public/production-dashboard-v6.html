@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>生产订单看板 V6</title>
+    <title>生产订单看板 V5</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -1153,6 +1153,25 @@
             setTheme(isDark ? 'light' : 'dark', 'manual');
         };
 
+        const scheduleAutoTheme = () => {
+            const now = new Date();
+            const hour = now.getHours();
+            const next = new Date(now);
+            if (hour < 6) {
+                next.setHours(6, 0, 0, 0);
+            } else if (hour < 18) {
+                next.setHours(18, 0, 0, 0);
+            } else {
+                next.setDate(next.getDate() + 1);
+                next.setHours(6, 0, 0, 0);
+            }
+            const delay = Math.max(next.getTime() - now.getTime(), 1000);
+            setTimeout(() => {
+                setTheme(autoTheme(), 'auto');
+                scheduleAutoTheme();
+            }, delay);
+        };
+
         const tableSizer = initTableSizing(document.querySelector('.table-container'));
         let tableRefreshTimer = null;
         let isTableRefreshing = false;
@@ -1592,6 +1611,7 @@
 
         const initialTheme = autoTheme();
         setTheme(initialTheme, 'auto');
+        scheduleAutoTheme();
 
         retryLoadData(1);
         initLiveUpdates();

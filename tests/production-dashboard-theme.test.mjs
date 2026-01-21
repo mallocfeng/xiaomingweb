@@ -68,4 +68,12 @@ describe('production dashboard theme toggle', () => {
 
     assert.match(html, /setTheme\([^)]*'manual'/);
   });
+
+  it('schedules automatic theme switching at time boundaries', async () => {
+    const html = await readDashboardHtml();
+
+    assert.match(html, /scheduleAutoTheme/);
+    assert.match(html, /setTimeout/);
+    assert.match(html, /setTheme\(autoTheme\(\),\s*'auto'\)/);
+  });
 });
