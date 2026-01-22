@@ -206,12 +206,16 @@
         }
 
         .logo-area {
+            --slider-expose: clamp(16px, 12%, 28px);
+            --slider-shift: 0px;
+            --slider-hover-nudge: 4px;
+            --slider-hover-direction: 1;
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #d41920 0%, #b01216 100%);
+            justify-content: flex-start;
+            background: linear-gradient(135deg, #2a0b0c 0%, #520a0d 100%);
             color: white;
             font-size: 1.5rem;
             font-weight: 800;
@@ -219,6 +223,28 @@
             min-height: 90px;
             border-radius: var(--radius-md);
             cursor: pointer;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+                inset 0 -8px 16px rgba(0, 0, 0, 0.3),
+                inset 6px 0 10px rgba(0, 0, 0, 0.18),
+                inset -6px 0 10px rgba(0, 0, 0, 0.18);
+        }
+
+        .logo-area::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: calc(100% - var(--slider-expose));
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(135deg, #d41920 0%, #b01216 100%);
+            box-shadow: 0 14px 24px rgba(0, 0, 0, 0.2),
+                0 2px 0 rgba(255, 255, 255, 0.14),
+                inset 0 1px 0 rgba(255, 255, 255, 0.22);
+            transform: translateX(var(--slider-shift));
+            transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.2, 1),
+                box-shadow 0.3s ease;
+            z-index: 1;
         }
 
         .logo-area::before {
@@ -231,14 +257,37 @@
             background-image: url('./assets/header-bg.png');
             background-size: cover;
             background-position: center;
-            opacity: 0.3;
+            opacity: 0.28;
             mix-blend-mode: overlay;
+            z-index: 2;
         }
 
         .logo-text {
             position: relative;
-            z-index: 1;
+            z-index: 3;
             font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: calc(100% - var(--slider-expose));
+            height: 100%;
+            transform: translateX(var(--slider-shift));
+            transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.2, 1);
+        }
+
+        :root[data-theme="dark"] .logo-area {
+            --slider-shift: var(--slider-expose);
+            --slider-hover-direction: -1;
+        }
+
+        .logo-area:hover::after {
+            transform: translateX(calc(var(--slider-shift) + (var(--slider-hover-nudge) * var(--slider-hover-direction))));
+            box-shadow: 0 16px 26px rgba(0, 0, 0, 0.24),
+                inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        }
+
+        .logo-area:hover .logo-text {
+            transform: translateX(calc(var(--slider-shift) + (var(--slider-hover-nudge) * var(--slider-hover-direction))));
         }
 
         .logo-area:focus-visible {
