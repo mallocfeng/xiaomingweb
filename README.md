@@ -65,6 +65,8 @@ curl -i -X POST "http://127.0.0.1:3000/api/production-dashboard-refresh"
 4. **记录上限联动**：下拉 “最多记录” 会同步到右上“最大记录”展示。
 5. **皮肤切换（Aurora/Caramel）**：右上按钮切换配色，Caramel 为默认主题且会保存到 `localStorage`。
 6. **表格 + 图表自适应（production-dashboard-v2）**：表格会监测容器高度并缩放，Pie/Bar 图从 `production-dashboard-data.json` 读取内容，10 秒自动刷新，Legend、图例字体随主题调色。
+7. **V5 看板（production-dashboard-v5.html）**：玻璃拟态布局、SSE 数据推送刷新、表格/图表自适应布局。
+8. **V6 看板（production-dashboard-v6.html）**：点击 Danfoss 切换亮/暗模式；本地时间 06:00-18:00 亮色、其余暗色，并在 06:00/18:00 自动切换；图表与图例颜色随主题同步；支持 `/api/production-dashboard-refresh` 强制刷新页面。
 
 > **不在 README 中保留任何生产数据库凭据或明文密码。**
 
