@@ -131,6 +131,22 @@
             z-index: 0;
         }
 
+        #particle-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.95;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #particle-canvas {
+                opacity: 0.45;
+            }
+        }
+
         :root[data-theme="dark"] body::before {
             background:
                 radial-gradient(ellipse 90% 70% at 0% 0%, rgba(72, 92, 140, 0.22) 0%, transparent 55%),
@@ -1081,6 +1097,8 @@
 
 <body>
 
+    <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
     <div class="dashboard-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -1147,6 +1165,195 @@
             return hour >= 6 && hour < 18 ? 'light' : 'dark';
         };
 
+        const particleCanvas = document.getElementById('particle-canvas');
+        const particleCtx = particleCanvas ? particleCanvas.getContext('2d') : null;
+        const particleState = {
+            particles: [],
+            width: 0,
+            height: 0,
+            dpr: Math.min(window.devicePixelRatio || 1, 2),
+            linkDistance: 120,
+            maxLinksPerParticle: 3,
+            animationId: null,
+            resizeRaf: null,
+            reducedMotion: window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
+        };
+        let particlePalette = {
+            base: '#e9f6ff',
+            accent: '#ff7824',
+            line: '#cc4c00',
+            alphaBoost: 1.1
+        };
+
+        const refreshParticlePalette = () => {
+            if (!particleCtx) return;
+            const styles = getComputedStyle(document.documentElement);
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const lightBase = '#f7d0b2';
+            particlePalette = {
+                base: isDark
+                    ? styles.getPropertyValue('--accent-orange-soft').trim() || '#ffe1cc'
+                    : lightBase,
+                accent: styles.getPropertyValue('--accent-orange').trim() || '#ff7824',
+                line: isDark
+                    ? styles.getPropertyValue('--accent-orange').trim() || '#ff8c3a'
+                    : '#cc4c00',
+                alphaBoost: isDark ? 1.0 : 1.25
+            };
+        };
+
+        const randomInRange = (min, max) => min + Math.random() * (max - min);
+
+        const pickParticleGroup = () => {
+            const roll = Math.random();
+            if (roll < 0.55) {
+                return {
+                    radius: randomInRange(1.2, 2.2),
+                    speed: randomInRange(0.08, 0.22),
+                    alpha: randomInRange(0.35, 0.6)
+                };
+            }
+            if (roll < 0.85) {
+                return {
+                    radius: randomInRange(2.1, 3.2),
+                    speed: randomInRange(0.15, 0.35),
+                    alpha: randomInRange(0.4, 0.7)
+                };
+            }
+            return {
+                radius: randomInRange(3.2, 4.6),
+                speed: randomInRange(0.2, 0.5),
+                alpha: randomInRange(0.45, 0.8)
+            };
+        };
+
+        const computeParticleCount = (width, height) => {
+            const area = width * height;
+            const base = Math.round(area / 8000);
+            const min = width < 600 ? 70 : 110;
+            const max = width < 600 ? 140 : 220;
+            return Math.max(min, Math.min(max, base));
+        };
+
+        const createParticle = (width, height) => {
+            const group = pickParticleGroup();
+            const angle = Math.random() * Math.PI * 2;
+            const speed = group.speed;
+            return {
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                radius: group.radius,
+                alpha: group.alpha,
+                isAccent: Math.random() < 0.18
+            };
+        };
+
+        const resizeParticleCanvas = (rebuild = false) => {
+            if (!particleCanvas || !particleCtx) return;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            particleState.dpr = Math.min(window.devicePixelRatio || 1, 2);
+            particleCanvas.width = Math.floor(width * particleState.dpr);
+            particleCanvas.height = Math.floor(height * particleState.dpr);
+            particleCanvas.style.width = `${width}px`;
+            particleCanvas.style.height = `${height}px`;
+            particleState.width = width;
+            particleState.height = height;
+            particleState.linkDistance = Math.max(90, Math.min(140, Math.sqrt(width * height) / 10));
+
+            const targetCount = computeParticleCount(width, height);
+            if (rebuild) {
+                particleState.particles = Array.from({ length: targetCount }, () => createParticle(width, height));
+                return;
+            }
+            const current = particleState.particles.length;
+            if (targetCount > current) {
+                for (let i = 0; i < targetCount - current; i += 1) {
+                    particleState.particles.push(createParticle(width, height));
+                }
+            } else if (targetCount < current) {
+                particleState.particles.length = targetCount;
+            }
+        };
+
+        const drawParticles = () => {
+            if (!particleCtx) return;
+            const { width, height, dpr, linkDistance, particles } = particleState;
+            if (!width || !height) return;
+
+            particleCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            particleCtx.clearRect(0, 0, width, height);
+
+            const linkDistanceSq = linkDistance * linkDistance;
+            const baseColor = particlePalette.base;
+            const accentColor = particlePalette.accent;
+            const lineColor = particlePalette.line || accentColor;
+            const alphaBoost = particlePalette.alphaBoost || 1;
+
+            const margin = 40;
+            particles.forEach((particle) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                if (particle.x < -margin) particle.x = width + margin;
+                if (particle.x > width + margin) particle.x = -margin;
+                if (particle.y < -margin) particle.y = height + margin;
+                if (particle.y > height + margin) particle.y = -margin;
+            });
+
+            for (let i = 0; i < particles.length; i += 1) {
+                const p = particles[i];
+                let links = 0;
+                for (let j = i + 1; j < particles.length; j += 1) {
+                    const q = particles[j];
+                    const dx = p.x - q.x;
+                    const dy = p.y - q.y;
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < linkDistanceSq) {
+                        const dist = Math.sqrt(distSq);
+                        const strength = 1 - dist / linkDistance;
+                        const alpha = strength * 0.65 * ((p.alpha + q.alpha) / 2) * alphaBoost;
+                        if (alpha < 0.02) continue;
+                        particleCtx.globalAlpha = alpha;
+                        particleCtx.strokeStyle = lineColor;
+                        particleCtx.lineWidth = dist < linkDistance * 0.4 ? 1.1 : 0.8;
+                        particleCtx.beginPath();
+                        particleCtx.moveTo(p.x, p.y);
+                        particleCtx.lineTo(q.x, q.y);
+                        particleCtx.stroke();
+                        links += 1;
+                        if (links >= particleState.maxLinksPerParticle) break;
+                    }
+                }
+            }
+
+            particles.forEach((particle) => {
+                particleCtx.globalAlpha = Math.min(particle.alpha * alphaBoost, 0.98);
+                particleCtx.fillStyle = particle.isAccent ? accentColor : baseColor;
+                particleCtx.beginPath();
+                particleCtx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                particleCtx.fill();
+            });
+            particleCtx.globalAlpha = 1;
+        };
+
+        const animateParticles = () => {
+            drawParticles();
+            particleState.animationId = requestAnimationFrame(animateParticles);
+        };
+
+        const startParticles = () => {
+            if (!particleCtx) return;
+            refreshParticlePalette();
+            resizeParticleCanvas(true);
+            if (particleState.reducedMotion?.matches) {
+                drawParticles();
+                return;
+            }
+            animateParticles();
+        };
+
         const applyChartTheme = (theme) => {
             const rootStyles = getComputedStyle(document.documentElement);
             const textMain = rootStyles.getPropertyValue('--text-main').trim();
@@ -1195,6 +1402,7 @@
             if (legendData.length) {
                 updateLegend(legendData);
             }
+            refreshParticlePalette();
         };
 
         const toggleTheme = () => {
@@ -1664,6 +1872,31 @@
         const initialTheme = autoTheme();
         setTheme(initialTheme, 'auto');
         scheduleAutoTheme();
+        startParticles();
+
+        if (particleCtx) {
+            window.addEventListener('resize', () => {
+                if (particleState.resizeRaf) {
+                    cancelAnimationFrame(particleState.resizeRaf);
+                }
+                particleState.resizeRaf = requestAnimationFrame(() => {
+                    resizeParticleCanvas();
+                });
+            });
+            if (particleState.reducedMotion?.addEventListener) {
+                particleState.reducedMotion.addEventListener('change', () => {
+                    if (particleState.reducedMotion.matches) {
+                        if (particleState.animationId) {
+                            cancelAnimationFrame(particleState.animationId);
+                            particleState.animationId = null;
+                        }
+                        drawParticles();
+                    } else if (!particleState.animationId) {
+                        animateParticles();
+                    }
+                });
+            }
+        }
 
         retryLoadData(1);
         initLiveUpdates();
