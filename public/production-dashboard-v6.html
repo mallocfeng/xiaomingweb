@@ -1588,6 +1588,9 @@
             }
             liveSource = new EventSource('/api/production-dashboard-data/stream');
             liveSource.addEventListener('data-update', loadData);
+            liveSource.addEventListener('page-refresh', () => {
+                window.location.reload();
+            });
             liveSource.onopen = () => {
             };
             liveSource.onerror = () => {

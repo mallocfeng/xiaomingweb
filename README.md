@@ -40,6 +40,20 @@ npm run start      # 生产启动
 - `POST /api/search`：可传入 `rangeKey`、`startTime`、`stopTime`、`sn`、`orderName`、`stationFilters`、`limit`。
   - `stationFilters` 格式：`[{ key: 'OP10', status: 'OK' }]`。
   - 返回字段：`count` 与 `data`（直接来自 `TS70_246K`）。
+- `POST /api/production-dashboard-data`：更新 `public/production-dashboard-data.json` 并广播数据更新事件。
+- `POST /api/production-dashboard-refresh`：广播页面强制刷新事件，让打开中的 V6 看板自动刷新页面。
+
+示例：
+
+```bash
+# 更新看板数据
+curl -i -X POST "http://127.0.0.1:3000/api/production-dashboard-data" \
+  -H "Content-Type: application/json" \
+  --data-binary "@/Volumes/MacMiniDisk/project/xiaomingWeb/public/production-dashboard-data.json"
+
+# 强制刷新看板页面
+curl -i -X POST "http://127.0.0.1:3000/api/production-dashboard-refresh"
+```
 
 ## 前端特点
 

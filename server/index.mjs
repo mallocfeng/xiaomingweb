@@ -28,6 +28,13 @@ const broadcastDataUpdate = () => {
   });
 };
 
+const broadcastPageRefresh = () => {
+  const payload = `event: page-refresh\ndata: ${Date.now()}\n\n`;
+  sseClients.forEach((res) => {
+    res.write(payload);
+  });
+};
+
 app.get('/api/status', (req, res) => {
   res.json({
     status: 'ok',
@@ -107,6 +114,16 @@ app.post('/api/production-dashboard-data', express.text({ type: '*/*', limit: '2
   } catch (error) {
     console.error('Dashboard data update failed', error);
     res.status(500).json({ error: 'Unable to update data file' });
+  }
+});
+
+app.post('/api/production-dashboard-refresh', (req, res) => {
+  try {
+    broadcastPageRefresh();
+    res.json({ status: 'ok' });
+  } catch (error) {
+    console.error('Dashboard refresh request failed', error);
+    res.status(500).json({ error: 'Unable to trigger refresh' });
   }
 });
 
