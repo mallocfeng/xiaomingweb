@@ -2516,14 +2516,25 @@
         };
 
         const EQUIPMENT_STATE_TEXT = {
-            normal: '设备正常运行',
+            normal: '设备正常',
             standby: '设备待机',
             fault: '设备异常'
         };
 
         const normalizeEquipmentState = (value) => {
             const state = String(value ?? '').trim().toLowerCase();
-            return ['normal', 'standby', 'fault'].includes(state) ? state : '';
+            if (!state) return '';
+            const stateAliasMap = {
+                normal: 'normal',
+                standby: 'standby',
+                fault: 'fault',
+                abnormal: 'fault',
+                error: 'fault',
+                '正常': 'normal',
+                '待机': 'standby',
+                '异常': 'fault'
+            };
+            return stateAliasMap[state] || '';
         };
 
         const inferEquipmentStateFromText = (value) => {
@@ -2556,7 +2567,7 @@
                 eq.classList.toggle('is-fault', state === 'fault');
                 eq.classList.remove('is-alert');
                 const eqText = eq.querySelector('[data-equipment-text]');
-                const statusText = String(data.equipmentStatus ?? '').trim() || EQUIPMENT_STATE_TEXT[state];
+                const statusText = EQUIPMENT_STATE_TEXT[state] || EQUIPMENT_STATE_TEXT.normal;
                 if (eqText) {
                     eqText.textContent = statusText;
                 } else {
